@@ -1,0 +1,17 @@
+ktor:
+  application:
+    modules:
+      - pt.ipbeja.moviesapi.ApplicationKt.module
+  deployment:
+    port: ${PORT:8080}
+
+database:
+  host: localhost
+  port: 5432
+  db: postgres
+  user: diogo
+  password: diogo
+
+administration:
+  user: admin
+  password: admin

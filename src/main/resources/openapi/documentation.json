@@ -1,0 +1,2046 @@
+{
+    "openapi": "3.1.1",
+    "info": {
+        "title": "Movies API",
+        "version": "1.0.0",
+        "description": "API"
+    },
+    "paths": {
+        "failures": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/SimulateFailuresConfig"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {}
+        },
+        "/genres": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/GenreResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/CreateGenreRequest"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/GenreResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateGenreRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GenreResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/genres/{id}": {
+            "delete": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/genres/delete": {
+            "put": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/movies/{id}": {
+            "get": {
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MovieDetailResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/movies/{id}/pictures/{pictureId}": {
+            "get": {
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "pictureId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "Content-Disposition": {
+                            "description": ""
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "pictureId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/movies/": {
+            "get": {
+                "parameters": [
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "count",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "director",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "genre",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "title",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "fromReleaseDate",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "$ref": "#/components/schemas/LocalDate"
+                        }
+                    },
+                    {
+                        "name": "toReleaseDate",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "$ref": "#/components/schemas/LocalDate"
+                        }
+                    },
+                    {
+                        "name": "fromRating",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "toRating",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "favoritesOnly",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "sortBy",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sortOrder",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/MovieQueryResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ]
+            }
+        },
+        "/movies/{id}/ratings": {
+            "get": {
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/MovieRatingResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SetUserRatingRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/movies/{id}/mark-as-favorite": {
+            "put": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "value",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/movies": {
+            "post": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/CreateMovieRequest"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/MovieDetailResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/movies/{id}/cast": {
+            "post": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "$ref": "#/components/schemas/CastMemberAssignmentRequest"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/CastMemberResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/movies/{id}/cast/{personId}": {
+            "delete": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "personId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/movies/{id}/cast/remove": {
+            "put": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    }
+                },
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/movies/{id}/pictures/delete": {
+            "put": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer"
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/people": {
+            "get": {
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/PersonResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/PersonResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PersonResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/people/{id}": {
+            "get": {
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PersonDetailResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "int",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/people/{id}/picture/{filename}": {
+            "get": {
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PersonDetailResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/people/delete": {
+            "put": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": ""
+                    }
+                }
+            }
+        },
+        "/users/register": {
+            "post": {
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PrivateUserResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/register/admin": {
+            "post": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PrivateUserResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/login": {
+            "get": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/LoginResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/PrivateUserResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/users/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "404": {
+                        "description": ""
+                    },
+                    "200": {
+                        "description": "",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UserResponse"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "basic": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "403": {
+                        "description": ""
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "SimulateFailuresConfig": {
+                "type": "object",
+                "properties": {
+                    "failureRate": {
+                        "type": "number"
+                    },
+                    "minimumDelay": {
+                        "type": "integer"
+                    },
+                    "maximumDelay": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "GenreResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                }
+            },
+            "CreateGenreRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                }
+            },
+            "UpdateGenreRequest": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    }
+                }
+            },
+            "MovieDetailResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "synopsis": {
+                        "type": "string"
+                    },
+                    "genres": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "director": {
+                        "type": "object",
+                        "properties": {
+                            "personId": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "picture": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "mainPicture": {
+                                        "type": "boolean"
+                                    },
+                                    "filename": {
+                                        "type": "string"
+                                    },
+                                    "contentType": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "minimumAge": {
+                        "type": "integer"
+                    },
+                    "releaseDate": {
+                        "type": "object",
+                        "properties": {
+                            "value": {
+                                "type": "object",
+                                "properties": {
+                                    "year": {
+                                        "type": "integer"
+                                    },
+                                    "month": {
+                                        "type": "integer"
+                                    },
+                                    "day": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "year": {
+                                "type": "integer"
+                            },
+                            "monthNumber": {
+                                "type": "integer"
+                            },
+                            "month": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "ordinal": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "dayOfMonth": {
+                                "type": "integer"
+                            },
+                            "day": {
+                                "type": "integer"
+                            },
+                            "dayOfWeek": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "ordinal": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "dayOfYear": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "rating": {
+                        "type": "object",
+                        "properties": {
+                            "average": {
+                                "type": "number"
+                            },
+                            "buckets": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "rating": {
+                                            "type": "integer"
+                                        },
+                                        "count": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "pictures": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "mainPicture": {
+                                    "type": "boolean"
+                                },
+                                "filename": {
+                                    "type": "string"
+                                },
+                                "contentType": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "createdAt": {
+                        "type": "object",
+                        "properties": {
+                            "epochSeconds": {
+                                "type": "integer"
+                            },
+                            "nanosecondsOfSecond": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "updatedAt": {
+                        "type": "object",
+                        "properties": {
+                            "epochSeconds": {
+                                "type": "integer"
+                            },
+                            "nanosecondsOfSecond": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "cast": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "personId": {
+                                    "type": "integer"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "character": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "MovieQueryResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "title": {
+                        "type": "string"
+                    },
+                    "synopsis": {
+                        "type": "string"
+                    },
+                    "genres": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "releaseDate": {
+                        "type": "object",
+                        "properties": {
+                            "value": {
+                                "type": "object",
+                                "properties": {
+                                    "year": {
+                                        "type": "integer"
+                                    },
+                                    "month": {
+                                        "type": "integer"
+                                    },
+                                    "day": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "year": {
+                                "type": "integer"
+                            },
+                            "monthNumber": {
+                                "type": "integer"
+                            },
+                            "month": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "ordinal": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "dayOfMonth": {
+                                "type": "integer"
+                            },
+                            "day": {
+                                "type": "integer"
+                            },
+                            "dayOfWeek": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "ordinal": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "dayOfYear": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "director": {
+                        "type": "object",
+                        "properties": {
+                            "personId": {
+                                "type": "integer"
+                            },
+                            "name": {
+                                "type": "string"
+                            },
+                            "picture": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "mainPicture": {
+                                        "type": "boolean"
+                                    },
+                                    "filename": {
+                                        "type": "string"
+                                    },
+                                    "contentType": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "mainPicture": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "mainPicture": {
+                                "type": "boolean"
+                            },
+                            "filename": {
+                                "type": "string"
+                            },
+                            "contentType": {
+                                "type": "string"
+                            },
+                            "description": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "rating": {
+                        "type": "number"
+                    },
+                    "favorite": {
+                        "type": "boolean"
+                    },
+                    "createdAt": {
+                        "type": "object",
+                        "properties": {
+                            "epochSeconds": {
+                                "type": "integer"
+                            },
+                            "nanosecondsOfSecond": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "updatedAt": {
+                        "type": "object",
+                        "properties": {
+                            "epochSeconds": {
+                                "type": "integer"
+                            },
+                            "nanosecondsOfSecond": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            },
+            "MovieRatingResponse": {
+                "type": "object",
+                "properties": {
+                    "score": {
+                        "type": "integer"
+                    },
+                    "comment": {
+                        "type": "string"
+                    },
+                    "author": {
+                        "type": "integer"
+                    }
+                }
+            },
+            "SetUserRatingRequest": {
+                "type": "object",
+                "properties": {
+                    "score": {
+                        "type": "integer"
+                    },
+                    "comment": {
+                        "type": "string"
+                    }
+                }
+            },
+            "CreateMovieRequest": {
+                "type": "object",
+                "properties": {
+                    "title": {
+                        "type": "string"
+                    },
+                    "synopsis": {
+                        "type": "string"
+                    },
+                    "genres": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "releaseDate": {
+                        "type": "object",
+                        "properties": {
+                            "value": {
+                                "type": "object",
+                                "properties": {
+                                    "year": {
+                                        "type": "integer"
+                                    },
+                                    "month": {
+                                        "type": "integer"
+                                    },
+                                    "day": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "year": {
+                                "type": "integer"
+                            },
+                            "monthNumber": {
+                                "type": "integer"
+                            },
+                            "month": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "ordinal": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "dayOfMonth": {
+                                "type": "integer"
+                            },
+                            "day": {
+                                "type": "integer"
+                            },
+                            "dayOfWeek": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "ordinal": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "dayOfYear": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "directorId": {
+                        "type": "integer"
+                    },
+                    "minimumAge": {
+                        "type": "integer"
+                    },
+                    "cast": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "personId": {
+                                    "type": "integer"
+                                },
+                                "role": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "pictures": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "filename": {
+                                    "type": "string"
+                                },
+                                "data": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                },
+                                "mainPicture": {
+                                    "type": "boolean"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "CastMemberAssignmentRequest": {
+                "type": "object",
+                "properties": {
+                    "personId": {
+                        "type": "integer"
+                    },
+                    "role": {
+                        "type": "string"
+                    }
+                }
+            },
+            "CastMemberResponse": {
+                "type": "object",
+                "properties": {
+                    "personId": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "character": {
+                        "type": "string"
+                    }
+                }
+            },
+            "PersonResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "dateOfBirth": {
+                        "type": "object",
+                        "properties": {
+                            "value": {
+                                "type": "object",
+                                "properties": {
+                                    "year": {
+                                        "type": "integer"
+                                    },
+                                    "month": {
+                                        "type": "integer"
+                                    },
+                                    "day": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "year": {
+                                "type": "integer"
+                            },
+                            "monthNumber": {
+                                "type": "integer"
+                            },
+                            "month": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "ordinal": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "dayOfMonth": {
+                                "type": "integer"
+                            },
+                            "day": {
+                                "type": "integer"
+                            },
+                            "dayOfWeek": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "ordinal": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "dayOfYear": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "picture": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer"
+                            },
+                            "mainPicture": {
+                                "type": "boolean"
+                            },
+                            "filename": {
+                                "type": "string"
+                            },
+                            "contentType": {
+                                "type": "string"
+                            },
+                            "description": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "PersonDetailResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "dateOfBirth": {
+                        "type": "object",
+                        "properties": {
+                            "value": {
+                                "type": "object",
+                                "properties": {
+                                    "year": {
+                                        "type": "integer"
+                                    },
+                                    "month": {
+                                        "type": "integer"
+                                    },
+                                    "day": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "year": {
+                                "type": "integer"
+                            },
+                            "monthNumber": {
+                                "type": "integer"
+                            },
+                            "month": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "ordinal": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "dayOfMonth": {
+                                "type": "integer"
+                            },
+                            "day": {
+                                "type": "integer"
+                            },
+                            "dayOfWeek": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "ordinal": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "dayOfYear": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "pictures": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "mainPicture": {
+                                    "type": "boolean"
+                                },
+                                "filename": {
+                                    "type": "string"
+                                },
+                                "contentType": {
+                                    "type": "string"
+                                },
+                                "description": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "directedMovies": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "title": {
+                                    "type": "string"
+                                },
+                                "releaseDate": {
+                                    "type": "object",
+                                    "properties": {
+                                        "value": {
+                                            "type": "object",
+                                            "properties": {
+                                                "year": {
+                                                    "type": "integer"
+                                                },
+                                                "month": {
+                                                    "type": "integer"
+                                                },
+                                                "day": {
+                                                    "type": "integer"
+                                                }
+                                            }
+                                        },
+                                        "year": {
+                                            "type": "integer"
+                                        },
+                                        "monthNumber": {
+                                            "type": "integer"
+                                        },
+                                        "month": {
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "ordinal": {
+                                                    "type": "integer"
+                                                }
+                                            }
+                                        },
+                                        "dayOfMonth": {
+                                            "type": "integer"
+                                        },
+                                        "day": {
+                                            "type": "integer"
+                                        },
+                                        "dayOfWeek": {
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "ordinal": {
+                                                    "type": "integer"
+                                                }
+                                            }
+                                        },
+                                        "dayOfYear": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "picture": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "mainPicture": {
+                                            "type": "boolean"
+                                        },
+                                        "filename": {
+                                            "type": "string"
+                                        },
+                                        "contentType": {
+                                            "type": "string"
+                                        },
+                                        "description": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "movieId": {
+                                    "type": "integer"
+                                },
+                                "title": {
+                                    "type": "string"
+                                },
+                                "releaseDate": {
+                                    "type": "object",
+                                    "properties": {
+                                        "value": {
+                                            "type": "object",
+                                            "properties": {
+                                                "year": {
+                                                    "type": "integer"
+                                                },
+                                                "month": {
+                                                    "type": "integer"
+                                                },
+                                                "day": {
+                                                    "type": "integer"
+                                                }
+                                            }
+                                        },
+                                        "year": {
+                                            "type": "integer"
+                                        },
+                                        "monthNumber": {
+                                            "type": "integer"
+                                        },
+                                        "month": {
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "ordinal": {
+                                                    "type": "integer"
+                                                }
+                                            }
+                                        },
+                                        "dayOfMonth": {
+                                            "type": "integer"
+                                        },
+                                        "day": {
+                                            "type": "integer"
+                                        },
+                                        "dayOfWeek": {
+                                            "type": "object",
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string"
+                                                },
+                                                "ordinal": {
+                                                    "type": "integer"
+                                                }
+                                            }
+                                        },
+                                        "dayOfYear": {
+                                            "type": "integer"
+                                        }
+                                    }
+                                },
+                                "character": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "PrivateUserResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "dateOfBirth": {
+                        "type": "object",
+                        "properties": {
+                            "value": {
+                                "type": "object",
+                                "properties": {
+                                    "year": {
+                                        "type": "integer"
+                                    },
+                                    "month": {
+                                        "type": "integer"
+                                    },
+                                    "day": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "year": {
+                                "type": "integer"
+                            },
+                            "monthNumber": {
+                                "type": "integer"
+                            },
+                            "month": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "ordinal": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "dayOfMonth": {
+                                "type": "integer"
+                            },
+                            "day": {
+                                "type": "integer"
+                            },
+                            "dayOfWeek": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "ordinal": {
+                                        "type": "integer"
+                                    }
+                                }
+                            },
+                            "dayOfYear": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "createdAt": {
+                        "type": "object",
+                        "properties": {
+                            "epochSeconds": {
+                                "type": "integer"
+                            },
+                            "nanosecondsOfSecond": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "updatedAt": {
+                        "type": "object",
+                        "properties": {
+                            "epochSeconds": {
+                                "type": "integer"
+                            },
+                            "nanosecondsOfSecond": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            },
+            "LoginResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "role": {
+                        "type": "string"
+                    }
+                }
+            },
+            "UserResponse": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "username": {
+                        "type": "string"
+                    },
+                    "createdAt": {
+                        "type": "object",
+                        "properties": {
+                            "epochSeconds": {
+                                "type": "integer"
+                            },
+                            "nanosecondsOfSecond": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    "updatedAt": {
+                        "type": "object",
+                        "properties": {
+                            "epochSeconds": {
+                                "type": "integer"
+                            },
+                            "nanosecondsOfSecond": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "securitySchemes": {
+            "basic": {
+                "type": "http",
+                "scheme": "basic"
+            }
+        }
+    }
+}
