@@ -66,30 +66,8 @@ val RoutingContext.isAdmin: Boolean
 
 fun Application.configureRouting(database: Database) {
     routing {
-        swaggerUI(path = "openapi"/*, swaggerFile = "openapi/documentation.json"*/)
+        swaggerUI(path = "openapi", swaggerFile = "/app/openapi/documentation.yaml")
     }
-
-    /*install(SSE)
-    install(StatusPages) {
-        exception<Throwable> { call, cause ->
-            val problemDetails = ProblemDetails(
-                title = "Internal Server Error",
-                status = HttpStatusCode.InternalServerError.value,
-                detail = "An unexpected error occurred. Contact the service administrator if this error persists.",
-                instance = call.request.path()
-            )
-            call.respond(HttpStatusCode.InternalServerError, problemDetails)
-        }
-    }
-
-    install(RequestValidation) {
-        validate<String> { bodyText ->
-            if (!bodyText.startsWith("Hello"))
-                ValidationResult.Invalid("Body text should start with 'Hello'")
-            else ValidationResult.Valid
-        }
-    }
-    install(DoubleReceive)*/
 
 
     routing {

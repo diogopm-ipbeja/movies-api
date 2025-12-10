@@ -104,6 +104,11 @@ object MovieRatings : CompositeIdTable("movie_ratings") {
     val createdAt = timestamp("created_at").clientDefault { Clock.System.now() }
     val updatedAt = timestamp("updated_at").nullable()
 
+    init {
+        addIdColumn(user)
+        addIdColumn(movie)
+    }
+
     override val primaryKey: PrimaryKey = PrimaryKey(user, movie)
 
 }

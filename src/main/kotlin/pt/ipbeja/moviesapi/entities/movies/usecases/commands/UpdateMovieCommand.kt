@@ -30,7 +30,7 @@ data class UpdateMovieCommand(
     val title: String,
     val synopsis: String,
     val genres: Set<Int>,
-    val directorId: Int,
+    val directorId: Int?,
     val releaseDate: LocalDate,
     val minimumAge: Int = 0
 ) : Request<MovieSimple>
@@ -45,10 +45,10 @@ class UpdateMovieCommandHandler(val db: Database) : RequestHandler<UpdateMovieCo
 
     override suspend fun handle(request: UpdateMovieCommand) = transaction(db) {
 
-        val movie = MovieEntity.Companion.findById(request.id)?.apply {
+        val movie = MovieEntity.findById(request.id)?.apply {
             title = request.title
             synopsis = request.synopsis
-            directorId = EntityID(request.directorId, Persons)
+            directorId = request.directorId?.let { EntityID(it, Persons) }
             releaseDate = request.releaseDate
             updatedAt = Clock.System.now()
             minimumAge = request.minimumAge

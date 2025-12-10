@@ -1,0 +1,2325 @@
+openapi: 3.0.3
+info:
+  title: Movies API
+  description: |
+    A comprehensive REST API for managing movies, genres, people (actors/directors), and users.
+
+    ## Authentication
+    This API uses HTTP Basic Authentication. Most endpoints require authentication, and some
+    administrative endpoints require the 'admin' role.
+
+    ## Roles
+    - **admin**: Full access to all endpoints including create, update, and delete operations
+    - **user**: Can browse movies, rate them, and manage their favorites and profile
+
+    ## Error Handling
+    Errors are returned using the RFC 7807 Problem Details format.
+
+    ## Date/Time Formats
+    - Dates are formatted as ISO 8601 (YYYY-MM-DD)
+    - Timestamps are formatted as ISO 8601 with timezone (e.g., 2024-01-15T10:30:00Z)
+  version: 1.0.0
+  contact:
+    name: Movies API Support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://{host}:{port}
+    description: Development server
+    variables:
+      host:
+        default: 'localhost'
+        description: Server hostname
+      port:
+        default: '8080'
+        description: Server port
+
+tags:
+  - name: Movies
+    description: Operations related to movies management
+  - name: Genres
+    description: Operations related to movie genres
+  - name: People
+    description: Operations related to people (actors, directors)
+  - name: Users
+    description: User management and authentication
+  - name: System
+    description: System configuration and testing endpoints
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: HTTP Basic Authentication using username and password
+
+  schemas:
+    # Common Schemas
+    LocalDate:
+      type: string
+      format: date
+      example: "2024-01-15"
+      description: Date in ISO 8601 format (YYYY-MM-DD)
+
+    Instant:
+      type: string
+      format: date-time
+      example: "2024-01-15T10:30:00Z"
+      description: Timestamp in ISO 8601 format
+
+    ProblemDetails:
+      type: object
+      description: RFC 7807 Problem Details for HTTP APIs
+      properties:
+        type:
+          type: string
+          format: uri
+          description: A URI reference that identifies the problem type
+          example: "https://api.movies.com/problems/not-found"
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type
+          example: "Resource Not Found"
+        status:
+          type: integer
+          description: The HTTP status code
+          example: 404
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence
+          example: "Movie with ID 123 was not found"
+        instance:
+          type: string
+          format: uri
+          description: A URI reference that identifies the specific occurrence
+          example: "/movies/123"
+        extensions:
+          type: object
+          additionalProperties: true
+          description: Additional problem-specific properties
+      required:
+        - title
+        - status
+
+    # System Schemas
+    SimulateFailuresConfig:
+      type: object
+      description: Configuration for simulating failures and latency in API responses (for testing)
+      properties:
+        failureRate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Probability between 0 and 1 that a request will fail
+          example: 0.1
+        minimumDelay:
+          type: integer
+          minimum: 0
+          description: Minimum artificial delay in milliseconds
+          example: 100
+        maximumDelay:
+          type: integer
+          minimum: 0
+          description: Maximum artificial delay in milliseconds
+          example: 500
+      required:
+        - failureRate
+        - minimumDelay
+        - maximumDelay
+
+    # Picture Schemas
+    CreatePictureRequest:
+      type: object
+      description: Request to create a picture with base64-encoded data
+      properties:
+        filename:
+          type: string
+          description: Name of the file including extension
+          example: "poster.jpg"
+        data:
+          type: string
+          format: byte
+          description: Base64-encoded image data
+          example: "/9j/4AAQSkZJRgABAQAAAQABAAD..."
+        description:
+          type: string
+          nullable: true
+          description: Optional description of the picture
+          example: "Movie poster artwork"
+        mainPicture:
+          type: boolean
+          default: false
+          description: Whether this should be the main/primary picture
+      required:
+        - filename
+        - data
+
+    PictureInfoResponse:
+      type: object
+      description: Information about a stored picture
+      properties:
+        id:
+          type: integer
+          description: Unique identifier of the picture
+          example: 1
+        mainPicture:
+          type: boolean
+          description: Whether this is the main picture
+          example: true
+        filename:
+          type: string
+          description: Original filename
+          example: "poster.jpg"
+        contentType:
+          type: string
+          description: MIME type of the image
+          example: "image/jpeg"
+        description:
+          type: string
+          nullable: true
+          description: Description of the picture
+          example: "Official movie poster"
+      required:
+        - id
+        - mainPicture
+        - filename
+        - contentType
+
+    # Genre Schemas
+    CreateGenreRequest:
+      type: object
+      description: Request to create a new genre
+      properties:
+        name:
+          type: string
+          description: Name of the genre
+          example: "Science Fiction"
+        description:
+          type: string
+          nullable: true
+          description: Description of the genre
+          example: "Movies featuring futuristic technology, space exploration, or speculative science"
+      required:
+        - name
+
+    UpdateGenreRequest:
+      type: object
+      description: Request to update an existing genre
+      properties:
+        id:
+          type: integer
+          description: ID of the genre to update
+          example: 1
+        name:
+          type: string
+          description: New name for the genre
+          example: "Sci-Fi"
+        description:
+          type: string
+          nullable: true
+          description: New description for the genre
+          example: "Science fiction movies"
+      required:
+        - id
+        - name
+
+    GenreResponse:
+      type: object
+      description: Genre information
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          example: 1
+        name:
+          type: string
+          description: Name of the genre
+          example: "Science Fiction"
+        description:
+          type: string
+          nullable: true
+          description: Description of the genre
+          example: "Movies featuring futuristic technology"
+      required:
+        - id
+        - name
+
+    # People Schemas
+    CreatePersonRequest:
+      type: object
+      description: Request to create a new person (actor/director)
+      properties:
+        name:
+          type: string
+          description: Full name of the person
+          example: "Christopher Nolan"
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          description: Date of birth in YYYY-MM-DD format
+          example: "1970-07-30"
+        pictures:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreatePictureRequest'
+          description: Profile pictures
+      required:
+        - name
+        - pictures
+
+    UpdatePersonRequest:
+      type: object
+      description: Request to update a person's information
+      properties:
+        id:
+          type: integer
+          description: ID of the person to update
+          example: 1
+        name:
+          type: string
+          description: Full name of the person
+          example: "Christopher Nolan"
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          description: Date of birth
+          example: "1970-07-30"
+      required:
+        - id
+        - name
+
+    PersonResponse:
+      type: object
+      description: Basic person information
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          example: 1
+        name:
+          type: string
+          description: Full name
+          example: "Christopher Nolan"
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          description: Date of birth
+          example: "1970-07-30"
+        picture:
+          $ref: '#/components/schemas/PictureInfoResponse'
+      required:
+        - id
+        - name
+
+    PersonDetailResponse:
+      type: object
+      description: Detailed person information including filmography
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          example: 1
+        name:
+          type: string
+          description: Full name
+          example: "Christopher Nolan"
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          description: Date of birth
+          example: "1970-07-30"
+        pictures:
+          type: array
+          items:
+            $ref: '#/components/schemas/PictureInfoResponse'
+          description: All pictures of this person
+        directedMovies:
+          type: array
+          items:
+            $ref: '#/components/schemas/DirectedMovie'
+          description: Movies directed by this person
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActingRole'
+          description: Acting roles this person has played
+      required:
+        - id
+        - name
+        - pictures
+        - directedMovies
+        - roles
+
+    DirectedMovie:
+      type: object
+      description: A movie directed by a person
+      properties:
+        id:
+          type: integer
+          description: Movie ID
+          example: 1
+        title:
+          type: string
+          description: Movie title
+          example: "Inception"
+        releaseDate:
+          type: string
+          format: date
+          description: Release date
+          example: "2010-07-16"
+        picture:
+          $ref: '#/components/schemas/PictureInfoResponse'
+      required:
+        - id
+        - title
+        - releaseDate
+
+    ActingRole:
+      type: object
+      description: An acting role played by a person
+      properties:
+        movieId:
+          type: integer
+          description: Movie ID
+          example: 1
+        title:
+          type: string
+          description: Movie title
+          example: "Inception"
+        releaseDate:
+          type: string
+          format: date
+          description: Release date
+          example: "2010-07-16"
+        character:
+          type: string
+          description: Character name
+          example: "Dom Cobb"
+      required:
+        - movieId
+        - title
+        - releaseDate
+        - character
+
+    # Movie Schemas
+    CastMemberAssignmentRequest:
+      type: object
+      description: Request to assign a cast member to a movie
+      properties:
+        personId:
+          type: integer
+          description: ID of the person to assign
+          example: 1
+        character:
+          type: string
+          description: Name of the character they play
+          example: "Dom Cobb"
+      required:
+        - personId
+        - character
+
+    CreateMovieRequest:
+      type: object
+      description: Request to create a new movie
+      properties:
+        title:
+          type: string
+          description: Movie title
+          example: "Inception"
+        synopsis:
+          type: string
+          description: Brief description of the movie plot
+          example: "A thief who enters the dreams of others to steal secrets..."
+        genres:
+          type: array
+          items:
+            type: integer
+          uniqueItems: true
+          description: IDs of genres this movie belongs to
+          example: [1, 3, 5]
+        releaseDate:
+          type: string
+          format: date
+          description: Release date
+          example: "2010-07-16"
+        directorId:
+          type: integer
+          nullable: true
+          description: ID of the director
+          example: 1
+        minimumAge:
+          type: integer
+          default: 0
+          minimum: 0
+          description: Minimum age rating
+          example: 13
+        cast:
+          type: array
+          items:
+            $ref: '#/components/schemas/CastMemberAssignmentRequest'
+          default: []
+          description: Cast members to assign
+        pictures:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreatePictureRequest'
+          default: []
+          description: Movie pictures (posters, stills)
+      required:
+        - title
+        - synopsis
+        - genres
+        - releaseDate
+
+    UpdateMovieRequest:
+      type: object
+      description: Request to update a movie
+      properties:
+        id:
+          type: integer
+          description: ID of the movie to update
+          example: 1
+        title:
+          type: string
+          description: Movie title
+          example: "Inception"
+        synopsis:
+          type: string
+          description: Movie synopsis
+          example: "A mind-bending thriller..."
+        genres:
+          type: array
+          items:
+            type: integer
+          description: Genre IDs
+          example: [1, 3]
+        releaseDate:
+          type: string
+          format: date
+          description: Release date
+          example: "2010-07-16"
+        directorId:
+          type: integer
+          description: Director's person ID
+          example: 1
+        minimumAge:
+          type: integer
+          description: Minimum age rating
+          example: 13
+      required:
+        - id
+        - title
+        - synopsis
+        - genres
+        - releaseDate
+        - directorId
+        - minimumAge
+
+    Rating:
+      type: object
+      description: Aggregated rating information
+      properties:
+        average:
+          type: number
+          format: float
+          description: Average rating score
+          example: 4.5
+        buckets:
+          type: array
+          items:
+            $ref: '#/components/schemas/RatingBucket'
+          description: Distribution of ratings
+      required:
+        - average
+        - buckets
+
+    RatingBucket:
+      type: object
+      description: Count of ratings for a specific score
+      properties:
+        rating:
+          type: integer
+          minimum: 0
+          maximum: 5
+          description: Rating score
+          example: 5
+        count:
+          type: integer
+          description: Number of ratings with this score
+          example: 42
+      required:
+        - rating
+        - count
+
+    DirectorResponse:
+      type: object
+      description: Director information
+      properties:
+        personId:
+          type: integer
+          description: Person ID of the director
+          example: 1
+        name:
+          type: string
+          description: Director's name
+          example: "Christopher Nolan"
+        picture:
+          $ref: '#/components/schemas/PictureInfoResponse'
+      required:
+        - personId
+        - name
+
+    CastMemberResponse:
+      type: object
+      description: Cast member information
+      properties:
+        personId:
+          type: integer
+          description: Person ID
+          example: 1
+        name:
+          type: string
+          description: Actor's name
+          example: "Leonardo DiCaprio"
+        character:
+          type: string
+          description: Character name
+          example: "Dom Cobb"
+      required:
+        - personId
+        - name
+        - character
+
+    MovieDetailResponse:
+      type: object
+      description: Detailed movie information
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          example: 1
+        title:
+          type: string
+          description: Movie title
+          example: "Inception"
+        synopsis:
+          type: string
+          description: Movie synopsis
+          example: "A thief who enters dreams..."
+        genres:
+          type: array
+          items:
+            $ref: '#/components/schemas/GenreResponse'
+          uniqueItems: true
+          description: Genres this movie belongs to
+        director:
+          $ref: '#/components/schemas/DirectorResponse'
+        minimumAge:
+          type: integer
+          description: Minimum age rating
+          example: 13
+        releaseDate:
+          type: string
+          format: date
+          description: Release date
+          example: "2010-07-16"
+        rating:
+          $ref: '#/components/schemas/Rating'
+        pictures:
+          type: array
+          items:
+            $ref: '#/components/schemas/PictureInfoResponse'
+          description: All movie pictures
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last update timestamp
+          example: "2024-01-20T14:45:00Z"
+        cast:
+          type: array
+          items:
+            $ref: '#/components/schemas/CastMemberResponse'
+          description: Cast members
+      required:
+        - id
+        - title
+        - synopsis
+        - genres
+        - minimumAge
+        - releaseDate
+        - pictures
+        - createdAt
+        - cast
+
+    MovieQueryResponse:
+      type: object
+      description: Movie information for list queries
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          example: 1
+        title:
+          type: string
+          description: Movie title
+          example: "Inception"
+        synopsis:
+          type: string
+          description: Movie synopsis
+          example: "A thief who enters dreams..."
+        genres:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+          description: Genre names
+          example: ["Science Fiction", "Thriller"]
+        releaseDate:
+          type: string
+          format: date
+          description: Release date
+          example: "2010-07-16"
+        director:
+          $ref: '#/components/schemas/DirectorResponse'
+        mainPicture:
+          $ref: '#/components/schemas/PictureInfoResponse'
+        rating:
+          type: number
+          format: float
+          nullable: true
+          description: Average rating
+          example: 4.5
+        favorite:
+          type: boolean
+          description: Whether current user has favorited this movie
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last update timestamp
+          example: "2024-01-20T14:45:00Z"
+      required:
+        - id
+        - title
+        - synopsis
+        - genres
+        - releaseDate
+        - favorite
+        - createdAt
+
+    SetUserRatingRequest:
+      type: object
+      description: Request to rate a movie
+      properties:
+        score:
+          type: integer
+          minimum: 0
+          maximum: 5
+          description: Rating score (0-5)
+          example: 4
+        comment:
+          type: string
+          nullable: true
+          description: Optional comment with the rating
+          example: "Great movie, amazing visuals!"
+      required:
+        - score
+
+    MovieRatingResponse:
+      type: object
+      description: A single movie rating
+      properties:
+        score:
+          type: integer
+          minimum: 0
+          maximum: 5
+          description: Rating score
+          example: 4
+        comment:
+          type: string
+          nullable: true
+          description: Rating comment
+          example: "Great movie!"
+        author:
+          type: integer
+          description: User ID of the rating author
+          example: 1
+      required:
+        - score
+        - author
+
+    # User Schemas
+    RegisterUserRequest:
+      type: object
+      description: Request to register a new user
+      properties:
+        username:
+          type: string
+          description: Unique username
+          example: "johndoe"
+        password:
+          type: string
+          format: password
+          description: User's password
+          example: "securePassword123"
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          description: Date of birth
+          example: "1990-05-15"
+        picture:
+          $ref: '#/components/schemas/CreatePictureRequest'
+      required:
+        - username
+        - password
+
+    LoginResponse:
+      type: object
+      description: Response after successful login
+      properties:
+        id:
+          type: integer
+          description: User ID
+          example: 1
+        username:
+          type: string
+          description: Username
+          example: "johndoe"
+        role:
+          type: string
+          enum: [user, admin]
+          description: User's role
+          example: "user"
+      required:
+        - id
+        - username
+        - role
+
+    UserResponse:
+      type: object
+      description: Public user information
+      properties:
+        id:
+          type: integer
+          description: User ID
+          example: 1
+        username:
+          type: string
+          description: Username
+          example: "johndoe"
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last update timestamp
+          example: "2024-01-20T14:45:00Z"
+      required:
+        - id
+        - username
+        - createdAt
+
+    PrivateUserResponse:
+      type: object
+      description: Private user information (visible to self or admin)
+      properties:
+        id:
+          type: integer
+          description: User ID
+          example: 1
+        username:
+          type: string
+          description: Username
+          example: "johndoe"
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          description: Date of birth
+          example: "1990-05-15"
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last update timestamp
+          example: "2024-01-20T14:45:00Z"
+      required:
+        - id
+        - username
+        - createdAt
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Unauthorized"
+            status: 401
+            detail: "Authentication credentials are required"
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Forbidden"
+            status: 403
+            detail: "You do not have permission to perform this action"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Not Found"
+            status: 404
+            detail: "The requested resource was not found"
+
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Bad Request"
+            status: 400
+            detail: "The request body contains invalid data"
+
+paths:
+  # System Endpoints
+  /failures:
+    get:
+      tags:
+        - System
+      summary: Get failure simulation settings
+      description: Returns the current configuration for simulating failures (for testing client resilience)
+      operationId: getFailureConfig
+      responses:
+        '200':
+          description: Current failure simulation configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulateFailuresConfig'
+
+    put:
+      tags:
+        - System
+      summary: Update failure simulation settings
+      description: Updates the configuration that controls artificial failures and delays
+      operationId: updateFailureConfig
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateFailuresConfig'
+      responses:
+        '200':
+          description: Updated configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulateFailuresConfig'
+
+  # Movies Endpoints
+  /movies:
+    get:
+      tags:
+        - Movies
+      summary: List movies
+      description: Retrieve a paginated list of movies with optional filtering and sorting
+      operationId: getMovies
+      security:
+        - basicAuth: []
+      parameters:
+        - name: offset
+          in: query
+          description: Number of items to skip for pagination
+          schema:
+            type: integer
+            format: int64
+            default: 0
+            minimum: 0
+        - name: count
+          in: query
+          description: Maximum number of items to return
+          schema:
+            type: integer
+            default: 2147483647
+            minimum: 1
+        - name: director
+          in: query
+          description: Filter by director's person ID
+          schema:
+            type: integer
+        - name: genre
+          in: query
+          description: Filter by genre name
+          schema:
+            type: string
+        - name: title
+          in: query
+          description: Filter by title (partial match)
+          schema:
+            type: string
+        - name: fromReleaseDate
+          in: query
+          description: Filter movies released on or after this date
+          schema:
+            type: string
+            format: date
+        - name: toReleaseDate
+          in: query
+          description: Filter movies released on or before this date
+          schema:
+            type: string
+            format: date
+        - name: fromRating
+          in: query
+          description: Minimum average rating (0-5)
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 5
+            default: 0
+        - name: toRating
+          in: query
+          description: Maximum average rating (0-5)
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 5
+            default: 5
+        - name: favoritesOnly
+          in: query
+          description: Only return movies marked as favorites by the current user (requires user role)
+          schema:
+            type: boolean
+            default: false
+        - name: sortBy
+          in: query
+          description: Field to sort by
+          schema:
+            type: string
+            enum: [releaseDate, title, rating]
+            default: releaseDate
+        - name: sortOrder
+          in: query
+          description: Sort direction
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+      responses:
+        '200':
+          description: List of movies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MovieQueryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Movies
+      summary: Create a movie
+      description: Create a new movie (requires admin role)
+      operationId: createMovie
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMovieRequest'
+      responses:
+        '200':
+          description: Movie created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    put:
+      tags:
+        - Movies
+      summary: Update a movie
+      description: Update an existing movie (requires admin role)
+      operationId: updateMovie
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMovieRequest'
+      responses:
+        '200':
+          description: Movie updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /movies/multiple:
+    post:
+      tags:
+        - Movies
+      summary: Create multiple movies
+      description: Create multiple movies in a single request (requires admin role)
+      operationId: createMovies
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreateMovieRequest'
+      responses:
+        '200':
+          description: Movies created successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MovieDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /movies/{id}:
+    get:
+      tags:
+        - Movies
+      summary: Get movie details
+      description: Retrieve detailed information about a specific movie
+      operationId: getMovie
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Movie ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Movie details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovieDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Movies
+      summary: Delete a movie
+      description: Delete a movie and all associated data (requires admin role)
+      operationId: deleteMovie
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Movie ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Movie deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /movies/{id}/mark-as-favorite:
+    put:
+      tags:
+        - Movies
+      summary: Mark/unmark movie as favorite
+      description: Mark or unmark a movie as a favorite for the current user (requires user role)
+      operationId: setMovieFavorite
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Movie ID
+          schema:
+            type: integer
+        - name: value
+          in: query
+          description: True to mark as favorite, false to unmark
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '204':
+          description: Favorite status updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /movies/{id}/ratings:
+    get:
+      tags:
+        - Movies
+      summary: Get movie ratings
+      description: Retrieve all ratings for a specific movie
+      operationId: getMovieRatings
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Movie ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: List of ratings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MovieRatingResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    post:
+      tags:
+        - Movies
+      summary: Rate a movie
+      description: Add or update the current user's rating for a movie (requires user role)
+      operationId: rateMovie
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Movie ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetUserRatingRequest'
+      responses:
+        '204':
+          description: Rating saved successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Movies
+      summary: Delete own rating
+      description: Delete the current user's rating for a movie
+      operationId: deleteOwnMovieRating
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Movie ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Rating deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /movies/{id}/ratings/{userId}:
+    delete:
+      tags:
+        - Movies
+      summary: Delete user's rating
+      description: Delete a specific user's rating for a movie (requires admin role)
+      operationId: deleteUserMovieRating
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Movie ID
+          schema:
+            type: integer
+        - name: userId
+          in: path
+          required: true
+          description: User ID whose rating to delete
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Rating deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /movies/{id}/pictures/{pictureId}:
+    get:
+      tags:
+        - Movies
+      summary: Get movie picture
+      description: Retrieve a specific picture file for a movie
+      operationId: getMoviePicture
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Movie ID
+          schema:
+            type: integer
+        - name: pictureId
+          in: path
+          required: true
+          description: Picture ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Picture file
+          headers:
+            Content-Disposition:
+              description: Inline disposition with filename
+              schema:
+                type: string
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Movies
+      summary: Delete movie picture
+      description: Delete a specific picture from a movie (requires admin role)
+      operationId: deleteMoviePicture
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Movie ID
+          schema:
+            type: integer
+        - name: pictureId
+          in: path
+          required: true
+          description: Picture ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Picture deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /movies/{id}/pictures/delete:
+    put:
+      tags:
+        - Movies
+      summary: Delete multiple movie pictures
+      description: Delete multiple pictures from a movie (requires admin role)
+      operationId: deleteMoviePictures
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Movie ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+              uniqueItems: true
+              description: IDs of pictures to delete
+              example: [1, 2, 3]
+      responses:
+        '204':
+          description: Pictures deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /movies/{id}/cast:
+    post:
+      tags:
+        - Movies
+      summary: Add cast members
+      description: Add cast members to a movie
+      operationId: addCastMembers
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Movie ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CastMemberAssignmentRequest'
+      responses:
+        '200':
+          description: Cast members added
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CastMemberResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /movies/{id}/cast/{personId}:
+    delete:
+      tags:
+        - Movies
+      summary: Remove cast member
+      description: Remove a cast member from a movie
+      operationId: removeCastMember
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Movie ID
+          schema:
+            type: integer
+        - name: personId
+          in: path
+          required: true
+          description: Person ID to remove
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Cast member removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /movies/{id}/cast/remove:
+    put:
+      tags:
+        - Movies
+      summary: Remove multiple cast members
+      description: Remove multiple cast members from a movie
+      operationId: removeCastMembers
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Movie ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+              uniqueItems: true
+              description: Person IDs to remove
+              example: [1, 2, 3]
+      responses:
+        '204':
+          description: Cast members removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # Genres Endpoints
+  /genres:
+    get:
+      tags:
+        - Genres
+      summary: List genres
+      description: Retrieve all genres (public endpoint, no authentication required)
+      operationId: getGenres
+      parameters:
+        - name: assignedOnly
+          in: query
+          description: If true, only return genres that are assigned to at least one movie
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of genres
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GenreResponse'
+
+    post:
+      tags:
+        - Genres
+      summary: Create genres
+      description: Create one or more genres (requires admin role)
+      operationId: createGenres
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreateGenreRequest'
+      responses:
+        '200':
+          description: Genres created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GenreResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    put:
+      tags:
+        - Genres
+      summary: Update a genre
+      description: Update an existing genre (requires admin role)
+      operationId: updateGenre
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGenreRequest'
+      responses:
+        '200':
+          description: Genre updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /genres/{id}:
+    delete:
+      tags:
+        - Genres
+      summary: Delete a genre
+      description: Delete a genre (requires admin role)
+      operationId: deleteGenre
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Genre ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Genre deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /genres/delete:
+    put:
+      tags:
+        - Genres
+      summary: Delete multiple genres
+      description: Delete multiple genres (requires admin role)
+      operationId: deleteGenres
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+              uniqueItems: true
+              description: Genre IDs to delete
+              example: [1, 2, 3]
+      responses:
+        '204':
+          description: Genres deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # People Endpoints
+  /people:
+    get:
+      tags:
+        - People
+      summary: List people
+      description: Retrieve all people (actors/directors) - public endpoint
+      operationId: getPeople
+      responses:
+        '200':
+          description: List of people
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PersonResponse'
+
+    post:
+      tags:
+        - People
+      summary: Create a person
+      description: Create a new person (requires admin role)
+      operationId: createPerson
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePersonRequest'
+      responses:
+        '200':
+          description: Person created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    put:
+      tags:
+        - People
+      summary: Update a person
+      description: Update a person's information (requires admin role)
+      operationId: updatePerson
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePersonRequest'
+      responses:
+        '200':
+          description: Person updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /people/multiple:
+    post:
+      tags:
+        - People
+      summary: Create multiple people
+      description: Create multiple people in a single request (requires admin role)
+      operationId: createPeople
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreatePersonRequest'
+      responses:
+        '200':
+          description: People created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PersonResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /people/{id}:
+    get:
+      tags:
+        - People
+      summary: Get person details
+      description: Retrieve detailed information about a person including filmography - public endpoint
+      operationId: getPerson
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Person details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - People
+      summary: Delete a person
+      description: Delete a person (requires admin role)
+      operationId: deletePerson
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Person deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /people/{id}/picture/{picId}:
+    get:
+      tags:
+        - People
+      summary: Get person picture
+      description: Retrieve a specific picture for a person - public endpoint
+      operationId: getPersonPicture
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: integer
+        - name: picId
+          in: path
+          required: true
+          description: Picture ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Picture file
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /people/{id}/add-pictures:
+    put:
+      tags:
+        - People
+      summary: Add pictures to person
+      description: Add pictures to a person's profile (requires admin role)
+      operationId: addPersonPictures
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreatePictureRequest'
+      responses:
+        '200':
+          description: Pictures added, returns updated person details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /people/{id}/remove-pictures:
+    put:
+      tags:
+        - People
+      summary: Remove pictures from person
+      description: Remove pictures from a person's profile (requires admin role)
+      operationId: removePersonPictures
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+              uniqueItems: true
+              description: Picture IDs to remove
+              example: [1, 2, 3]
+      responses:
+        '200':
+          description: Pictures removed, returns updated person details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /people/delete:
+    put:
+      tags:
+        - People
+      summary: Delete multiple people
+      description: Delete multiple people (requires admin role)
+      operationId: deletePeople
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+              uniqueItems: true
+              description: Person IDs to delete
+              example: [1, 2, 3]
+      responses:
+        '204':
+          description: People deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # Users Endpoints
+  /users/register:
+    post:
+      tags:
+        - Users
+      summary: Register a new user
+      description: Register a new user account with the 'user' role - public endpoint
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserRequest'
+      responses:
+        '200':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateUserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /users/register/admin:
+    post:
+      tags:
+        - Users
+      summary: Register an admin user
+      description: Register a new admin user (requires master admin authentication - the configured administration.user)
+      operationId: registerAdmin
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserRequest'
+      responses:
+        '200':
+          description: Admin user registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateUserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Not the master administrator
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "'username' is not the master administrator"
+
+  /users/login:
+    get:
+      tags:
+        - Users
+      summary: Login / Validate credentials
+      description: Validate credentials and return user information including role
+      operationId: login
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users:
+    get:
+      tags:
+        - Users
+      summary: List all users
+      description: Retrieve all users with private information (requires admin role)
+      operationId: getUsers
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PrivateUserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - Users
+      summary: Delete current user
+      description: Delete the currently authenticated user (cannot delete master administrator)
+      operationId: deleteCurrentUser
+      security:
+        - basicAuth: []
+      responses:
+        '204':
+          description: User deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Cannot delete master administrator or insufficient permissions
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /users/self:
+    get:
+      tags:
+        - Users
+      summary: Get current user
+      description: Retrieve the currently authenticated user's private information
+      operationId: getCurrentUser
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateUserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/self/picture:
+    put:
+      tags:
+        - Users
+      summary: Set current user's picture
+      description: Set or update the current user's profile picture
+      operationId: setCurrentUserPicture
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePictureRequest'
+      responses:
+        '204':
+          description: Picture updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      tags:
+        - Users
+      summary: Remove current user's picture
+      description: Remove the current user's profile picture
+      operationId: deleteCurrentUserPicture
+      security:
+        - basicAuth: []
+      responses:
+        '204':
+          description: Picture removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      description: Retrieve public user information by ID
+      operationId: getUser
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Users
+      summary: Delete user by ID
+      description: Delete a user by ID (admin can delete any user, regular users can only delete themselves)
+      operationId: deleteUser
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: User deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{id}/detail:
+    get:
+      tags:
+        - Users
+      summary: Get user details
+      description: Retrieve detailed user information including private data (requires admin role)
+      operationId: getUserDetail
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateUserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{id}/picture:
+    get:
+      tags:
+        - Users
+      summary: Get user picture
+      description: Retrieve a user's profile picture
+      operationId: getUserPicture
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Picture file
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Users
+      summary: Set user picture
+      description: Set or update a user's profile picture (requires admin role)
+      operationId: setUserPicture
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePictureRequest'
+      responses:
+        '204':
+          description: Picture updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Users
+      summary: Remove user picture
+      description: Remove a user's profile picture (requires admin role)
+      operationId: deleteUserPicture
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Picture removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'

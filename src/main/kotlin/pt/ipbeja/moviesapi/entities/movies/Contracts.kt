@@ -38,7 +38,7 @@ data class UpdateMovieRequest(
     val synopsis: String,
     val genres: List<Int>,
     val releaseDate: LocalDate,
-    val directorId: Int,
+    val directorId: Int?,
     val minimumAge: Int
 )
 

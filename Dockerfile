@@ -1,11 +1,12 @@
-FROM eclipse-temurin:17-jre
+FROM amazoncorretto:21-alpine3.21 AS runtime
+
 
 WORKDIR /app
 
-COPY build/libs/movies.jar app.jar
+COPY build/libs/movies-all.jar app.jar
 COPY build/resources/main/application.yaml application.yaml
-COPY build/resources/main/openapi openapi
-COPY src/main/resources/openapi/documentation.yaml openapi/documentation.yaml
+#COPY build/resources/main/openapi openapi
+COPY src/main/resources/openapi/doc.yaml openapi/documentation.yaml
 
 
 EXPOSE 8080

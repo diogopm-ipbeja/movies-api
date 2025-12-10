@@ -2,6 +2,7 @@ package pt.ipbeja.moviesapi.entities.movies.usecases.commands
 
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.dao.id.CompositeID
+import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
 import org.jetbrains.exposed.v1.jdbc.Database
@@ -11,6 +12,7 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import pt.ipbeja.moviesapi.MovieRatingEntity
 import pt.ipbeja.moviesapi.MovieRatings
 import pt.ipbeja.moviesapi.Movies
+import pt.ipbeja.moviesapi.Users
 import pt.ipbeja.moviesapi.utilities.*
 
 data class DeleteMovieRatingCommand(val movieId: Int, val userId: Int) : Request<ValueOr<Unit>>
@@ -23,8 +25,8 @@ class DeleteMovieRatingCommandHandler(val db: Database) : RequestHandler<DeleteM
 
 
         MovieRatingEntity.findById(CompositeID {
-            it[MovieRatings.user] = request.userId
-            it[MovieRatings.movie] = request.movieId
+            it[MovieRatings.user] = EntityID(request.userId, Users)
+            it[MovieRatings.movie] = EntityID(request.movieId, Movies)
         })?.delete()
 
         Unit.success()
