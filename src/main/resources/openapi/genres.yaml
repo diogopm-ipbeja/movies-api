@@ -1,0 +1,313 @@
+openapi: 3.0.3
+info:
+  title: Movies API - Genres
+  description: |
+    REST API endpoints for managing movie genres.
+
+    ## Authentication
+    This API uses HTTP Basic Authentication. The list endpoint is public,
+    but create, update, and delete operations require the 'admin' role.
+
+    ## Roles
+    - **admin**: Full access to all genre operations including create, update, and delete
+
+    ## Error Handling
+    Errors are returned using the RFC 7807 Problem Details format.
+  version: 1.0.0
+  contact:
+    name: Movies API Support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+tags:
+  - name: Genres
+    description: Operations related to movie genres
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: HTTP Basic Authentication using username and password
+
+  schemas:
+    ProblemDetails:
+      type: object
+      description: RFC 7807 Problem Details for HTTP APIs
+      properties:
+        type:
+          type: string
+          format: uri
+          description: A URI reference that identifies the problem type
+          example: "https://api.movies.com/problems/not-found"
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type
+          example: "Resource Not Found"
+        status:
+          type: integer
+          description: The HTTP status code
+          example: 404
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence
+          example: "Genre with ID 123 was not found"
+        instance:
+          type: string
+          format: uri
+          description: A URI reference that identifies the specific occurrence
+          example: "/genres/123"
+        extensions:
+          type: object
+          additionalProperties: true
+          description: Additional problem-specific properties
+      required:
+        - title
+        - status
+
+    CreateGenreRequest:
+      type: object
+      description: Request to create a new genre
+      properties:
+        name:
+          type: string
+          description: Name of the genre
+          example: "Science Fiction"
+        description:
+          type: string
+          nullable: true
+          description: Description of the genre
+          example: "Movies featuring futuristic technology, space exploration, or speculative science"
+      required:
+        - name
+
+    UpdateGenreRequest:
+      type: object
+      description: Request to update an existing genre
+      properties:
+        id:
+          type: integer
+          description: ID of the genre to update
+          example: 1
+        name:
+          type: string
+          description: New name for the genre
+          example: "Sci-Fi"
+        description:
+          type: string
+          nullable: true
+          description: New description for the genre
+          example: "Science fiction movies"
+      required:
+        - id
+        - name
+
+    GenreResponse:
+      type: object
+      description: Genre information
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          example: 1
+        name:
+          type: string
+          description: Name of the genre
+          example: "Science Fiction"
+        description:
+          type: string
+          nullable: true
+          description: Description of the genre
+          example: "Movies featuring futuristic technology"
+      required:
+        - id
+        - name
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Unauthorized"
+            status: 401
+            detail: "Authentication credentials are required"
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Forbidden"
+            status: 403
+            detail: "You do not have permission to perform this action"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Not Found"
+            status: 404
+            detail: "The requested genre was not found"
+
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Bad Request"
+            status: 400
+            detail: "The request body contains invalid data"
+
+paths:
+  /genres:
+    get:
+      tags:
+        - Genres
+      summary: List genres
+      description: Retrieve all genres (public endpoint, no authentication required)
+      operationId: getGenres
+      parameters:
+        - name: assignedOnly
+          in: query
+          description: If true, only return genres that are assigned to at least one movie
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: List of genres
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GenreResponse'
+
+    post:
+      tags:
+        - Genres
+      summary: Create genres
+      description: Create one or more genres (requires admin role)
+      operationId: createGenres
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreateGenreRequest'
+      responses:
+        '200':
+          description: Genres created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GenreResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+    put:
+      tags:
+        - Genres
+      summary: Update a genre
+      description: Update an existing genre (requires admin role)
+      operationId: updateGenre
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGenreRequest'
+      responses:
+        '200':
+          description: Genre updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenreResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /genres/{id}:
+    delete:
+      tags:
+        - Genres
+      summary: Delete a genre
+      description: Delete a genre (requires admin role)
+      operationId: deleteGenre
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Genre ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Genre deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /genres/delete:
+    put:
+      tags:
+        - Genres
+      summary: Delete multiple genres
+      description: Delete multiple genres (requires admin role)
+      operationId: deleteGenres
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+              uniqueItems: true
+              description: Genre IDs to delete
+              example: [1, 2, 3]
+      responses:
+        '204':
+          description: Genres deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'

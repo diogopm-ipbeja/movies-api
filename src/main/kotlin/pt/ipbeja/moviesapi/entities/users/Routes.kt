@@ -164,33 +164,38 @@ fun Routing.users() = route("/users") {
 
 
         delete("/{id}") {
-            val (id, username, role) = call.user
+            val currentUser = call.user
+            val userId = call.pathParameters.getOrFail<Int>("id")
 
-            val userId = call.pathParameters["id"]?.toInt() ?: throw Exception()
-            if (role != "admin" && id != userId) {
-                call.respond(HttpStatusCode.Forbidden)
-                return@delete
-            }
-
-            val handler by inject<DeleteUserCommandHandler>()
-            handler.handle(DeleteUserCommand(userId))
-        }
-
-        delete {
-            val (id, username, role) = call.user
-            if(environment.config.property("administration.user").getString() == username) {
+            // Check if trying to delete master admin
+            if (environment.config.property("administration.user").getString() == currentUser.username && currentUser.id == userId) {
                 call.respond(HttpStatusCode.Forbidden, "Cannot delete the master administrator")
                 return@delete
             }
 
-            val userId = call.pathParameters["id"]?.toInt() ?: throw Exception()
-            if (role != "admin" && id != userId) {
-                call.respond(HttpStatusCode.Forbidden)
+            // Users can only delete themselves, admins can delete anyone
+            if (currentUser.role != "admin" && currentUser.id != userId) {
+                call.respond(HttpStatusCode.Forbidden, "You can only delete your own account")
                 return@delete
             }
 
             val handler by inject<DeleteUserCommandHandler>()
             handler.handle(DeleteUserCommand(userId))
+            call.respond(HttpStatusCode.NoContent)
+        }
+
+        delete("/self") {
+            val currentUser = call.user
+
+            // Cannot delete master admin
+            if (environment.config.property("administration.user").getString() == currentUser.username) {
+                call.respond(HttpStatusCode.Forbidden, "Cannot delete the master administrator")
+                return@delete
+            }
+
+            val handler by inject<DeleteUserCommandHandler>()
+            handler.handle(DeleteUserCommand(currentUser.id))
+            call.respond(HttpStatusCode.NoContent)
         }
 
     }

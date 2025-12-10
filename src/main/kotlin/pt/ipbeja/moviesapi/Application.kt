@@ -7,8 +7,11 @@ import io.ktor.server.auth.*
 import io.ktor.server.config.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.contentnegotiation.*
+import io.ktor.server.plugins.cors.routing.*
+import io.ktor.server.plugins.statuspages.*
 import io.ktor.server.resources.Resources
 import io.ktor.server.response.*
+import pt.ipbeja.moviesapi.entities.common.ProblemDetails
 import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.v1.core.DatabaseConfig
@@ -67,6 +70,54 @@ fun Application.module() {
 
     install(ContentNegotiation) {
         json(appJson)
+    }
+
+    install(CORS) {
+        allowMethod(HttpMethod.Options)
+        allowMethod(HttpMethod.Get)
+        allowMethod(HttpMethod.Post)
+        allowMethod(HttpMethod.Put)
+        allowMethod(HttpMethod.Delete)
+        allowMethod(HttpMethod.Patch)
+        allowHeader(HttpHeaders.Authorization)
+        allowHeader(HttpHeaders.ContentType)
+        allowHeader(HttpHeaders.Accept)
+        allowCredentials = true
+        anyHost() // For development - restrict in production
+    }
+
+    install(StatusPages) {
+        exception<IllegalArgumentException> { call, cause ->
+            call.respond(
+                HttpStatusCode.BadRequest,
+                ProblemDetails(
+                    title = "Bad Request",
+                    status = 400,
+                    detail = cause.message
+                )
+            )
+        }
+        exception<IllegalStateException> { call, cause ->
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                ProblemDetails(
+                    title = "Internal Server Error",
+                    status = 500,
+                    detail = cause.message
+                )
+            )
+        }
+        exception<Throwable> { call, cause ->
+            call.application.environment.log.error("Unhandled exception", cause)
+            call.respond(
+                HttpStatusCode.InternalServerError,
+                ProblemDetails(
+                    title = "Internal Server Error",
+                    status = 500,
+                    detail = "An unexpected error occurred"
+                )
+            )
+        }
     }
 
     val dbUser = environment.config.property("database.user").getString()

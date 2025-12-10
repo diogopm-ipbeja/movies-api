@@ -1,0 +1,634 @@
+openapi: 3.0.3
+info:
+  title: People API
+  description: |
+    REST API for managing people (actors and directors) in the Movies system.
+
+    ## Overview
+    This API provides endpoints for creating, reading, updating, and deleting people
+    who participate in movies as actors or directors. People can have multiple pictures
+    associated with their profile and their filmography is tracked automatically.
+
+    ## Authentication
+    Most read operations are public. Create, update, and delete operations require
+    HTTP Basic Authentication with the 'admin' role.
+
+    ## Error Handling
+    Errors are returned using the RFC 7807 Problem Details format.
+  version: 1.0.0
+  contact:
+    name: Movies API Support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+tags:
+  - name: People
+    description: Operations related to people (actors, directors)
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: HTTP Basic Authentication using username and password
+
+  schemas:
+    # Common Schemas
+    LocalDate:
+      type: string
+      format: date
+      example: "2024-01-15"
+      description: Date in ISO 8601 format (YYYY-MM-DD)
+
+    ProblemDetails:
+      type: object
+      description: RFC 7807 Problem Details for HTTP APIs
+      properties:
+        type:
+          type: string
+          format: uri
+          description: A URI reference that identifies the problem type
+          example: "https://api.movies.com/problems/not-found"
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type
+          example: "Resource Not Found"
+        status:
+          type: integer
+          description: The HTTP status code
+          example: 404
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence
+          example: "Person with ID 123 was not found"
+        instance:
+          type: string
+          format: uri
+          description: A URI reference that identifies the specific occurrence
+          example: "/people/123"
+        extensions:
+          type: object
+          additionalProperties: true
+          description: Additional problem-specific properties
+      required:
+        - title
+        - status
+
+    # Picture Schemas
+    CreatePictureRequest:
+      type: object
+      description: Request to create a picture with base64-encoded data
+      properties:
+        filename:
+          type: string
+          description: Name of the file including extension
+          example: "profile.jpg"
+        data:
+          type: string
+          format: byte
+          description: Base64-encoded image data
+          example: "/9j/4AAQSkZJRgABAQAAAQABAAD..."
+        description:
+          type: string
+          nullable: true
+          description: Optional description of the picture
+          example: "Profile headshot"
+        mainPicture:
+          type: boolean
+          default: false
+          description: Whether this should be the main/primary picture
+      required:
+        - filename
+        - data
+
+    PictureInfoResponse:
+      type: object
+      description: Information about a stored picture
+      properties:
+        id:
+          type: integer
+          description: Unique identifier of the picture
+          example: 1
+        mainPicture:
+          type: boolean
+          description: Whether this is the main picture
+          example: true
+        filename:
+          type: string
+          description: Original filename
+          example: "profile.jpg"
+        contentType:
+          type: string
+          description: MIME type of the image
+          example: "image/jpeg"
+        description:
+          type: string
+          nullable: true
+          description: Description of the picture
+          example: "Official headshot"
+      required:
+        - id
+        - mainPicture
+        - filename
+        - contentType
+
+    # People Schemas
+    CreatePersonRequest:
+      type: object
+      description: Request to create a new person (actor/director)
+      properties:
+        name:
+          type: string
+          description: Full name of the person
+          example: "Christopher Nolan"
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          description: Date of birth in YYYY-MM-DD format
+          example: "1970-07-30"
+        pictures:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreatePictureRequest'
+          description: Profile pictures
+      required:
+        - name
+        - pictures
+
+    UpdatePersonRequest:
+      type: object
+      description: Request to update a person's information
+      properties:
+        id:
+          type: integer
+          description: ID of the person to update
+          example: 1
+        name:
+          type: string
+          description: Full name of the person
+          example: "Christopher Nolan"
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          description: Date of birth
+          example: "1970-07-30"
+      required:
+        - id
+        - name
+
+    PersonResponse:
+      type: object
+      description: Basic person information
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          example: 1
+        name:
+          type: string
+          description: Full name
+          example: "Christopher Nolan"
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          description: Date of birth
+          example: "1970-07-30"
+        picture:
+          $ref: '#/components/schemas/PictureInfoResponse'
+      required:
+        - id
+        - name
+
+    PersonDetailResponse:
+      type: object
+      description: Detailed person information including filmography
+      properties:
+        id:
+          type: integer
+          description: Unique identifier
+          example: 1
+        name:
+          type: string
+          description: Full name
+          example: "Christopher Nolan"
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          description: Date of birth
+          example: "1970-07-30"
+        pictures:
+          type: array
+          items:
+            $ref: '#/components/schemas/PictureInfoResponse'
+          description: All pictures of this person
+        directedMovies:
+          type: array
+          items:
+            $ref: '#/components/schemas/DirectedMovie'
+          description: Movies directed by this person
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActingRole'
+          description: Acting roles this person has played
+      required:
+        - id
+        - name
+        - pictures
+        - directedMovies
+        - roles
+
+    DirectedMovie:
+      type: object
+      description: A movie directed by a person
+      properties:
+        id:
+          type: integer
+          description: Movie ID
+          example: 1
+        title:
+          type: string
+          description: Movie title
+          example: "Inception"
+        releaseDate:
+          type: string
+          format: date
+          description: Release date
+          example: "2010-07-16"
+        picture:
+          $ref: '#/components/schemas/PictureInfoResponse'
+      required:
+        - id
+        - title
+        - releaseDate
+
+    ActingRole:
+      type: object
+      description: An acting role played by a person
+      properties:
+        movieId:
+          type: integer
+          description: Movie ID
+          example: 1
+        title:
+          type: string
+          description: Movie title
+          example: "Inception"
+        releaseDate:
+          type: string
+          format: date
+          description: Release date
+          example: "2010-07-16"
+        character:
+          type: string
+          description: Character name
+          example: "Dom Cobb"
+      required:
+        - movieId
+        - title
+        - releaseDate
+        - character
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Unauthorized"
+            status: 401
+            detail: "Authentication credentials are required"
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Forbidden"
+            status: 403
+            detail: "You do not have permission to perform this action"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Not Found"
+            status: 404
+            detail: "The requested resource was not found"
+
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Bad Request"
+            status: 400
+            detail: "The request body contains invalid data"
+
+paths:
+  /people:
+    get:
+      tags:
+        - People
+      summary: List people
+      description: Retrieve all people (actors/directors) - public endpoint
+      operationId: getPeople
+      responses:
+        '200':
+          description: List of people
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PersonResponse'
+
+    post:
+      tags:
+        - People
+      summary: Create a person
+      description: Create a new person (requires admin role)
+      operationId: createPerson
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePersonRequest'
+      responses:
+        '200':
+          description: Person created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    put:
+      tags:
+        - People
+      summary: Update a person
+      description: Update a person's information (requires admin role)
+      operationId: updatePerson
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePersonRequest'
+      responses:
+        '200':
+          description: Person updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /people/multiple:
+    post:
+      tags:
+        - People
+      summary: Create multiple people
+      description: Create multiple people in a single request (requires admin role)
+      operationId: createPeople
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreatePersonRequest'
+      responses:
+        '200':
+          description: People created
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PersonResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /people/{id}:
+    get:
+      tags:
+        - People
+      summary: Get person details
+      description: Retrieve detailed information about a person including filmography - public endpoint
+      operationId: getPerson
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Person details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - People
+      summary: Delete a person
+      description: Delete a person (requires admin role)
+      operationId: deletePerson
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Person deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /people/{id}/picture/{picId}:
+    get:
+      tags:
+        - People
+      summary: Get person picture
+      description: Retrieve a specific picture for a person - public endpoint
+      operationId: getPersonPicture
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: integer
+        - name: picId
+          in: path
+          required: true
+          description: Picture ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Picture file
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /people/{id}/add-pictures:
+    put:
+      tags:
+        - People
+      summary: Add pictures to person
+      description: Add pictures to a person's profile (requires admin role)
+      operationId: addPersonPictures
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/CreatePictureRequest'
+      responses:
+        '200':
+          description: Pictures added, returns updated person details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /people/{id}/remove-pictures:
+    put:
+      tags:
+        - People
+      summary: Remove pictures from person
+      description: Remove pictures from a person's profile (requires admin role)
+      operationId: removePersonPictures
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Person ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+              uniqueItems: true
+              description: Picture IDs to remove
+              example: [1, 2, 3]
+      responses:
+        '200':
+          description: Pictures removed, returns updated person details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PersonDetailResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /people/delete:
+    put:
+      tags:
+        - People
+      summary: Delete multiple people
+      description: Delete multiple people (requires admin role)
+      operationId: deletePeople
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: integer
+              uniqueItems: true
+              description: Person IDs to delete
+              example: [1, 2, 3]
+      responses:
+        '204':
+          description: People deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'

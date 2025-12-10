@@ -1,0 +1,606 @@
+openapi: 3.0.3
+info:
+  title: Movies API - Users
+  description: |
+    User management and authentication endpoints for the Movies API.
+
+    ## Authentication
+    This API uses HTTP Basic Authentication. Most endpoints require authentication.
+
+    ## Roles
+    - **admin**: Full access to all user management endpoints
+    - **user**: Can manage their own profile and view public user information
+
+    ## Error Handling
+    Errors are returned using the RFC 7807 Problem Details format.
+  version: 1.0.0
+  contact:
+    name: Movies API Support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+tags:
+  - name: Users
+    description: User management and authentication
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: HTTP Basic Authentication using username and password
+
+  schemas:
+    # Common Schemas
+    LocalDate:
+      type: string
+      format: date
+      example: "2024-01-15"
+      description: Date in ISO 8601 format (YYYY-MM-DD)
+
+    Instant:
+      type: string
+      format: date-time
+      example: "2024-01-15T10:30:00Z"
+      description: Timestamp in ISO 8601 format
+
+    ProblemDetails:
+      type: object
+      description: RFC 7807 Problem Details for HTTP APIs
+      properties:
+        type:
+          type: string
+          format: uri
+          description: A URI reference that identifies the problem type
+          example: "https://api.movies.com/problems/not-found"
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type
+          example: "Resource Not Found"
+        status:
+          type: integer
+          description: The HTTP status code
+          example: 404
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence
+          example: "User with ID 123 was not found"
+        instance:
+          type: string
+          format: uri
+          description: A URI reference that identifies the specific occurrence
+          example: "/users/123"
+        extensions:
+          type: object
+          additionalProperties: true
+          description: Additional problem-specific properties
+      required:
+        - title
+        - status
+
+    # Picture Schema
+    CreatePictureRequest:
+      type: object
+      description: Request to create a picture with base64-encoded data
+      properties:
+        filename:
+          type: string
+          description: Name of the file including extension
+          example: "profile.jpg"
+        data:
+          type: string
+          format: byte
+          description: Base64-encoded image data
+          example: "/9j/4AAQSkZJRgABAQAAAQABAAD..."
+        description:
+          type: string
+          nullable: true
+          description: Optional description of the picture
+          example: "Profile picture"
+        mainPicture:
+          type: boolean
+          default: false
+          description: Whether this should be the main/primary picture
+      required:
+        - filename
+        - data
+
+    # User Schemas
+    RegisterUserRequest:
+      type: object
+      description: Request to register a new user
+      properties:
+        username:
+          type: string
+          description: Unique username
+          example: "johndoe"
+        password:
+          type: string
+          format: password
+          description: User's password
+          example: "securePassword123"
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          description: Date of birth
+          example: "1990-05-15"
+        picture:
+          $ref: '#/components/schemas/CreatePictureRequest'
+      required:
+        - username
+        - password
+
+    LoginResponse:
+      type: object
+      description: Response after successful login
+      properties:
+        id:
+          type: integer
+          description: User ID
+          example: 1
+        username:
+          type: string
+          description: Username
+          example: "johndoe"
+        role:
+          type: string
+          enum: [user, admin]
+          description: User's role
+          example: "user"
+      required:
+        - id
+        - username
+        - role
+
+    UserResponse:
+      type: object
+      description: Public user information
+      properties:
+        id:
+          type: integer
+          description: User ID
+          example: 1
+        username:
+          type: string
+          description: Username
+          example: "johndoe"
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last update timestamp
+          example: "2024-01-20T14:45:00Z"
+      required:
+        - id
+        - username
+        - createdAt
+
+    PrivateUserResponse:
+      type: object
+      description: Private user information (visible to self or admin)
+      properties:
+        id:
+          type: integer
+          description: User ID
+          example: 1
+        username:
+          type: string
+          description: Username
+          example: "johndoe"
+        dateOfBirth:
+          type: string
+          format: date
+          nullable: true
+          description: Date of birth
+          example: "1990-05-15"
+        createdAt:
+          type: string
+          format: date-time
+          description: Account creation timestamp
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: Last update timestamp
+          example: "2024-01-20T14:45:00Z"
+      required:
+        - id
+        - username
+        - createdAt
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Unauthorized"
+            status: 401
+            detail: "Authentication credentials are required"
+
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Forbidden"
+            status: 403
+            detail: "You do not have permission to perform this action"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Not Found"
+            status: 404
+            detail: "The requested resource was not found"
+
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Bad Request"
+            status: 400
+            detail: "The request body contains invalid data"
+
+paths:
+  /users/register:
+    post:
+      tags:
+        - Users
+      summary: Register a new user
+      description: Register a new user account with the 'user' role - public endpoint
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserRequest'
+      responses:
+        '200':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateUserResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /users/register/admin:
+    post:
+      tags:
+        - Users
+      summary: Register an admin user
+      description: Register a new admin user (requires master admin authentication - the configured administration.user)
+      operationId: registerAdmin
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterUserRequest'
+      responses:
+        '200':
+          description: Admin user registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateUserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Not the master administrator
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "'username' is not the master administrator"
+
+  /users/login:
+    get:
+      tags:
+        - Users
+      summary: Login / Validate credentials
+      description: Validate credentials and return user information including role
+      operationId: login
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users:
+    get:
+      tags:
+        - Users
+      summary: List all users
+      description: Retrieve all users with private information (requires admin role)
+      operationId: getUsers
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PrivateUserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - Users
+      summary: Delete current user
+      description: Delete the currently authenticated user (cannot delete master administrator)
+      operationId: deleteCurrentUser
+      security:
+        - basicAuth: []
+      responses:
+        '204':
+          description: User deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Cannot delete master administrator or insufficient permissions
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /users/self:
+    get:
+      tags:
+        - Users
+      summary: Get current user
+      description: Retrieve the currently authenticated user's private information
+      operationId: getCurrentUser
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateUserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/self/picture:
+    put:
+      tags:
+        - Users
+      summary: Set current user's picture
+      description: Set or update the current user's profile picture
+      operationId: setCurrentUserPicture
+      security:
+        - basicAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePictureRequest'
+      responses:
+        '204':
+          description: Picture updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    delete:
+      tags:
+        - Users
+      summary: Remove current user's picture
+      description: Remove the current user's profile picture
+      operationId: deleteCurrentUserPicture
+      security:
+        - basicAuth: []
+      responses:
+        '204':
+          description: Picture removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/{id}:
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      description: Retrieve public user information by ID
+      operationId: getUser
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Users
+      summary: Delete user by ID
+      description: Delete a user by ID (admin can delete any user, regular users can only delete themselves)
+      operationId: deleteUser
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: User deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{id}/detail:
+    get:
+      tags:
+        - Users
+      summary: Get user details
+      description: Retrieve detailed user information including private data (requires admin role)
+      operationId: getUserDetail
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivateUserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{id}/picture:
+    get:
+      tags:
+        - Users
+      summary: Get user picture
+      description: Retrieve a user's profile picture
+      operationId: getUserPicture
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Picture file
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags:
+        - Users
+      summary: Set user picture
+      description: Set or update a user's profile picture (requires admin role)
+      operationId: setUserPicture
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePictureRequest'
+      responses:
+        '204':
+          description: Picture updated
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Users
+      summary: Remove user picture
+      description: Remove a user's profile picture (requires admin role)
+      operationId: deleteUserPicture
+      security:
+        - basicAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: User ID
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Picture removed
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'

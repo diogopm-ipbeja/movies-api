@@ -109,17 +109,18 @@ fun Routing.movies() = route("/movies") {
         }
 
         post("/{id}/ratings") {
-            val request = call.receive<SetUserRatingRequest>()
             if (!requireUser()) return@post
 
-            val movieId = call.pathParameters["id"]?.toInt() ?: throw Exception()
-            val user = call.principal<UserPrincipal>()!!
+            val request = call.receive<SetUserRatingRequest>()
+            val movieId = call.pathParameters.getOrFail<Int>("id")
+            val user = call.user
 
             val handler by inject<RateMovieCommandHandler>()
 
-            handler.handle(RateMovieCommand(movieId, user.id, request.score.coerceIn(0..5), request.comment))
-
-            call.respond(HttpStatusCode.NoContent)
+            when (val result = handler.handle(RateMovieCommand(movieId, user.id, request.score, request.comment))) {
+                is Success -> call.respond(HttpStatusCode.NoContent)
+                is Failure -> respondProblem(result)
+            }
         }
 
         delete("/{id}/ratings") {
@@ -143,7 +144,7 @@ fun Routing.movies() = route("/movies") {
             if (!requireUser()) return@put
 
             val movieId = call.pathParameters.getOrFail<Int>("id")
-            val user = call.principal<UserPrincipal>()!!
+            val user = call.user
             val isFavorite = call.queryParameters["value"]?.toBoolean() ?: true
 
             val handler by inject<SetUserFavoriteCommandHandler>()
@@ -229,24 +230,19 @@ fun Routing.movies() = route("/movies") {
         }
 
         post("/{id}/cast") {
-
-            val movieId = call.pathParameters["id"]!!.toInt()
-
+            val movieId = call.pathParameters.getOrFail<Int>("id")
             val assignment = call.receive<List<CastMemberAssignmentRequest>>()
-
             val castMembers = assignment.map { RoleAssignment(it.personId, it.character) }
 
-            // val results = handler.handle(AddCastMembersCommand(movieId, castMembers))
             val handler by inject<AddCastMembersCommandHandler2>()
             val results2 = handler.handle(AddCastMembersCommand2(movieId, castMembers))
-
 
             call.respond(results2.map { it.toResponse() })
         }
 
         delete("/{id}/cast/{personId}") {
-            val movieId = call.pathParameters["id"]!!.toInt()
-            val personId = call.pathParameters["personId"]!!.toInt()
+            val movieId = call.pathParameters.getOrFail<Int>("id")
+            val personId = call.pathParameters.getOrFail<Int>("personId")
             val handler by inject<RemoveCastMembersCommandHandler>()
 
             handler.handle(RemoveCastMembersCommand(movieId, setOf(personId)))
@@ -254,8 +250,8 @@ fun Routing.movies() = route("/movies") {
         }
 
         put("/{id}/cast/remove") {
+            val movieId = call.pathParameters.getOrFail<Int>("id")
             val membersIds = call.receive<Set<Int>>()
-            val movieId = call.pathParameters["id"]!!.toInt()
             val handler by inject<RemoveCastMembersCommandHandler>()
             handler.handle(RemoveCastMembersCommand(movieId, membersIds))
             call.respond(HttpStatusCode.NoContent)
@@ -283,7 +279,7 @@ fun Routing.movies() = route("/movies") {
 
         put("/{id}/pictures/delete") {
             if (!requireAdmin()) return@put
-            val movieId = call.pathParameters["id"]!!.toInt()
+            val movieId = call.pathParameters.getOrFail<Int>("id")
             val pictureIds = call.receive<Set<Int>>()
 
             val handler by inject<RemoveMoviePicturesCommandHandler>()

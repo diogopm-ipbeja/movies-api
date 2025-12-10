@@ -1,0 +1,188 @@
+openapi: 3.0.3
+info:
+  title: Movies API - System Endpoints
+  description: |
+    System configuration and testing endpoints for the Movies API.
+
+    These endpoints are primarily used for:
+    - Testing client resilience by simulating failures and latency
+    - Configuring API behavior for development and testing environments
+
+    **Note**: These endpoints should typically be disabled or restricted in production environments.
+  version: 1.0.0
+  contact:
+    name: Movies API Support
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+tags:
+  - name: System
+    description: System configuration and testing endpoints
+
+components:
+  schemas:
+    SimulateFailuresConfig:
+      type: object
+      description: Configuration for simulating failures and latency in API responses (for testing)
+      properties:
+        failureRate:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Probability between 0 and 1 that a request will fail
+          example: 0.1
+        minimumDelay:
+          type: integer
+          minimum: 0
+          description: Minimum artificial delay in milliseconds
+          example: 100
+        maximumDelay:
+          type: integer
+          minimum: 0
+          description: Maximum artificial delay in milliseconds
+          example: 500
+      required:
+        - failureRate
+        - minimumDelay
+        - maximumDelay
+
+    ProblemDetails:
+      type: object
+      description: RFC 7807 Problem Details for HTTP APIs
+      properties:
+        type:
+          type: string
+          format: uri
+          description: A URI reference that identifies the problem type
+          example: "https://api.movies.com/problems/server-error"
+        title:
+          type: string
+          description: A short, human-readable summary of the problem type
+          example: "Internal Server Error"
+        status:
+          type: integer
+          description: The HTTP status code
+          example: 500
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence
+          example: "A simulated failure occurred"
+        instance:
+          type: string
+          format: uri
+          description: A URI reference that identifies the specific occurrence
+          example: "/failures"
+        extensions:
+          type: object
+          additionalProperties: true
+          description: Additional problem-specific properties
+      required:
+        - title
+        - status
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+          example:
+            title: "Bad Request"
+            status: 400
+            detail: "The request body contains invalid data"
+
+paths:
+  /failures:
+    get:
+      tags:
+        - System
+      summary: Get failure simulation settings
+      description: |
+        Returns the current configuration for simulating failures.
+
+        This endpoint is used for testing client resilience by allowing
+        you to inspect the current failure simulation configuration.
+
+        **Use Case**: Before running integration tests, check the current
+        failure settings to ensure they match your test expectations.
+      operationId: getFailureConfig
+      responses:
+        '200':
+          description: Current failure simulation configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulateFailuresConfig'
+              example:
+                failureRate: 0.0
+                minimumDelay: 0
+                maximumDelay: 0
+
+    put:
+      tags:
+        - System
+      summary: Update failure simulation settings
+      description: |
+        Updates the configuration that controls artificial failures and delays.
+
+        This endpoint allows you to configure:
+        - **failureRate**: Probability (0.0 to 1.0) that any request will fail with a 500 error
+        - **minimumDelay**: Minimum artificial latency added to each request (milliseconds)
+        - **maximumDelay**: Maximum artificial latency added to each request (milliseconds)
+
+        **Use Cases**:
+        - Test client retry logic by setting a failure rate
+        - Test client timeout handling by adding delays
+        - Simulate network latency in development environments
+
+        **Warning**: Setting a high failure rate or long delays will significantly
+        impact API usability. Use with caution and reset to defaults after testing.
+      operationId: updateFailureConfig
+      requestBody:
+        required: true
+        description: New failure simulation configuration
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SimulateFailuresConfig'
+            examples:
+              noFailures:
+                summary: Disable all failure simulation
+                value:
+                  failureRate: 0.0
+                  minimumDelay: 0
+                  maximumDelay: 0
+              lowFailureRate:
+                summary: 10% failure rate for retry testing
+                value:
+                  failureRate: 0.1
+                  minimumDelay: 0
+                  maximumDelay: 0
+              simulateLatency:
+                summary: Simulate network latency (100-500ms)
+                value:
+                  failureRate: 0.0
+                  minimumDelay: 100
+                  maximumDelay: 500
+              chaosMode:
+                summary: High failure rate with latency
+                value:
+                  failureRate: 0.3
+                  minimumDelay: 200
+                  maximumDelay: 1000
+      responses:
+        '200':
+          description: Updated configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimulateFailuresConfig'
+        '400':
+          $ref: '#/components/responses/BadRequest'
