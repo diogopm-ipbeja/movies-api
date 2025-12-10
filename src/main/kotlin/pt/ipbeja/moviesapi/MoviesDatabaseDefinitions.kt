@@ -41,10 +41,16 @@ object Movies : IntIdTable("movies") {
     val updatedAt = timestamp("updated_at").nullable()
 }
 
-object MovieGenres: CompositeIdTable("movie_genres") {
+object MovieGenres : CompositeIdTable("movie_genres") {
     val movie = reference("movie_id", Movies)
     val genre = reference("genre_id", Genres)
-    override val primaryKey: PrimaryKey = PrimaryKey(movie, genre )
+
+    init {
+        addIdColumn(movie)
+        addIdColumn(genre)
+    }
+
+    override val primaryKey: PrimaryKey = PrimaryKey(movie, genre)
 }
 
 object Genres: IntIdTable("genres") {
@@ -78,12 +84,12 @@ object PersonPictures : IntIdTable("person_pictures") {
 object CastMembers : CompositeIdTable("cast_members") {
     val movie = reference("movie_id", Movies, onDelete = ReferenceOption.CASCADE)
     val person = reference("person_id", Persons, onDelete = ReferenceOption.CASCADE)
-    val role = text("role").entityId()
-    // val designation = text("designation")
-    // val asd = enumerationByName<Roles>("sdad", 32)
-    // val asd2 = customEnumeration("columnName",{ value -> enumValueOf<Roles>(value as String) }, { PGEnum("roles", it) })
-    // val asd2 = customEnumeration("enumCol", "roles", fromDb = { v -> enumValueOf<Roles>(v as String)}, toDb = { v -> PGEnum("roles", v)})
+    val role = text("role").entityId()  // Regular column - .entityId() is correct here
 
+    init {
+        addIdColumn(movie)
+        addIdColumn(person)
+    }
 
     override val primaryKey: PrimaryKey = PrimaryKey(movie, person, role)
 }
@@ -93,19 +99,28 @@ object Favorites : CompositeIdTable("favorites") {
     val movie = reference("movie_id", Movies, onDelete = ReferenceOption.CASCADE)
     val createdAt = timestamp("created_at").clientDefault { Clock.System.now() }
 
+    init {
+        addIdColumn(user)
+        addIdColumn(movie)
+    }
+
     override val primaryKey: PrimaryKey = PrimaryKey(user, movie)
 }
 
 object MovieRatings : CompositeIdTable("movie_ratings") {
     val user = reference("user_id", Users, onDelete = ReferenceOption.CASCADE)
     val movie = reference("movie_id", Movies, onDelete = ReferenceOption.CASCADE)
-    val score = integer("score")
+    val score = integer("score").check("score_constraint") { (it greaterEq 0) and (it lessEq 5) }
     val comment = varchar("comment", 1023).nullable()
     val createdAt = timestamp("created_at").clientDefault { Clock.System.now() }
     val updatedAt = timestamp("updated_at").nullable()
 
-    override val primaryKey: PrimaryKey = PrimaryKey(user, movie)
+    init {
+        addIdColumn(user)
+        addIdColumn(movie)
+    }
 
+    override val primaryKey: PrimaryKey = PrimaryKey(user, movie)
 }
 
 
@@ -190,7 +205,7 @@ class CastMemberEntity(id: EntityID<CompositeID>) : CompositeEntity(id) {
 }
 
 class FavoriteEntity(id: EntityID<CompositeID>) : CompositeEntity(id) {
-    companion object : CompositeEntityClass<CastMemberEntity>(Favorites)
+    companion object : CompositeEntityClass<FavoriteEntity>(Favorites)
 
     val createdAt by Favorites.createdAt
 

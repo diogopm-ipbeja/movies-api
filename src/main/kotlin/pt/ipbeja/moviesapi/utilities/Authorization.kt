@@ -20,10 +20,13 @@ val RoleBasedAuthorizationPlugin = createRouteScopedPlugin(
     val allowedRoles = pluginConfig.roles
     pluginConfig.apply {
         on(AuthenticationChecked) { call ->
-            val role = call.principal<UserPrincipal>()?.role
-            if (role !in allowedRoles) {
-                val principal = call.principal<UserPrincipal>()!!
-                call.respond(HttpStatusCode.Forbidden, "'${principal.username}' is not an administrator")
+            val principal = call.principal<UserPrincipal>()
+            if (principal == null) {
+                call.respond(HttpStatusCode.Unauthorized, "Authentication required")
+                return@on
+            }
+            if (principal.role !in allowedRoles) {
+                call.respond(HttpStatusCode.Forbidden, "'${principal.username}' is not authorized for this operation")
             }
         }
     }
@@ -40,7 +43,8 @@ fun Route.authorized(
 }
 
 val RoutingCall.user : UserPrincipal
-    get() = principal<UserPrincipal>()!!
+    get() = principal<UserPrincipal>()
+        ?: throw IllegalStateException("User principal not found. Ensure this is called within an authenticated route.")
 
 
 val UserPrincipal.isUser : Boolean

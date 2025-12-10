@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movies API - Test Interface</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --accent: #6366f1;
+            --accent-hover: #4f46e5;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --get: #3b82f6;
+            --post: #22c55e;
+            --put: #f59e0b;
+            --delete: #ef4444;
+            --border: #475569;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        .auth-panel {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .auth-panel input {
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 14px;
+            width: 150px;
+        }
+
+        .auth-panel input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .auth-panel button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            background: var(--accent);
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .auth-panel button:hover {
+            background: var(--accent-hover);
+        }
+
+        .auth-status {
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            background: var(--bg-tertiary);
+        }
+
+        .auth-status.success {
+            background: rgba(34, 197, 94, 0.2);
+            color: var(--success);
+        }
+
+        .auth-status.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--error);
+        }
+
+        .auth-hint {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: 10px;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 55%;
+            overflow-y: auto;
+            padding: 20px;
+            border-right: 1px solid var(--border);
+        }
+
+        .response-panel {
+            width: 45%;
+            overflow-y: auto;
+            padding: 20px;
+            background: var(--bg-secondary);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .tab.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .endpoint-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .endpoint-header:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .method-badge {
+            font-weight: 600;
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .method-badge.get { background: var(--get); }
+        .method-badge.post { background: var(--post); }
+        .method-badge.put { background: var(--put); }
+        .method-badge.delete { background: var(--delete); }
+
+        .endpoint-path {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            flex: 1;
+        }
+
+        .endpoint-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .expand-icon {
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+
+        .endpoint-card.expanded .expand-icon {
+            transform: rotate(180deg);
+        }
+
+        .endpoint-body {
+            display: none;
+            padding: 15px;
+            border-top: 1px solid var(--border);
+            background: var(--bg-primary);
+        }
+
+        .endpoint-card.expanded .endpoint-body {
+            display: block;
+        }
+
+        .param-group {
+            margin-bottom: 15px;
+        }
+
+        .param-group h4 {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .param-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        .param-row label {
+            font-size: 13px;
+            min-width: 120px;
+            color: var(--text-secondary);
+        }
+
+        .param-row input,
+        .param-row select {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+
+        .param-row input:focus,
+        .param-row select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .param-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            flex: none;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            resize: vertical;
+        }
+
+        .endpoint-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .response-panel h2 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        .response-meta {
+            margin-bottom: 15px;
+        }
+
+        .response-status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .response-status.success { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+        .response-status.warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+        .response-status.error { background: rgba(239, 68, 68, 0.2); color: var(--error); }
+
+        .response-time {
+            margin-left: 10px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .response-section {
+            margin-bottom: 20px;
+        }
+
+        .response-section h3 {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        pre {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 15px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .loading {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+            }
+            .sidebar, .response-panel {
+                width: 100%;
+                border-right: none;
+            }
+            .response-panel {
+                border-top: 1px solid var(--border);
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Movies API Test Interface</h1>
+        <div class="auth-panel">
+            <input type="text" id="username" placeholder="Username" value="admin">
+            <input type="password" id="password" placeholder="Password" value="admin">
+            <button onclick="testAuth()">Test Auth</button>
+            <span id="auth-status" class="auth-status">Not authenticated</span>
+            <span class="auth-hint">Default: admin/admin</span>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="tabs">
+                <button class="tab active" data-section="movies">Movies (17)</button>
+                <button class="tab" data-section="genres">Genres (5)</button>
+                <button class="tab" data-section="people">People (10)</button>
+                <button class="tab" data-section="users">Users (14)</button>
+                <button class="tab" data-section="system">System (2)</button>
+            </div>
+
+            <!-- MOVIES SECTION -->
+            <div id="movies-section" class="section active">
+
+                <!-- GET /movies -->
+                <div class="endpoint-card" data-endpoint="movies-list">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/movies</span>
+                        <span class="endpoint-desc">List movies with filters</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Query Parameters</h4>
+                            <div class="param-row">
+                                <label>offset</label>
+                                <input type="number" id="movies-list-offset" value="0" min="0">
+                            </div>
+                            <div class="param-row">
+                                <label>count</label>
+                                <input type="number" id="movies-list-count" value="10" min="1">
+                            </div>
+                            <div class="param-row">
+                                <label>director</label>
+                                <input type="number" id="movies-list-director" placeholder="Director ID">
+                            </div>
+                            <div class="param-row">
+                                <label>genre</label>
+                                <input type="text" id="movies-list-genre" placeholder="Genre name">
+                            </div>
+                            <div class="param-row">
+                                <label>title</label>
+                                <input type="text" id="movies-list-title" placeholder="Partial title">
+                            </div>
+                            <div class="param-row">
+                                <label>fromReleaseDate</label>
+                                <input type="date" id="movies-list-fromReleaseDate">
+                            </div>
+                            <div class="param-row">
+                                <label>toReleaseDate</label>
+                                <input type="date" id="movies-list-toReleaseDate">
+                            </div>
+                            <div class="param-row">
+                                <label>fromRating</label>
+                                <input type="number" id="movies-list-fromRating" value="0" min="0" max="5">
+                            </div>
+                            <div class="param-row">
+                                <label>toRating</label>
+                                <input type="number" id="movies-list-toRating" value="5" min="0" max="5">
+                            </div>
+                            <div class="param-row">
+                                <label>favoritesOnly</label>
+                                <input type="checkbox" id="movies-list-favoritesOnly">
+                            </div>
+                            <div class="param-row">
+                                <label>sortBy</label>
+                                <select id="movies-list-sortBy">
+                                    <option value="releaseDate">releaseDate</option>
+                                    <option value="title">title</option>
+                                    <option value="rating">rating</option>
+                                </select>
+                            </div>
+                            <div class="param-row">
+                                <label>sortOrder</label>
+                                <select id="movies-list-sortOrder">
+                                    <option value="desc">desc</option>
+                                    <option value="asc">asc</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-secondary" onclick="prefillMoviesList()">Pre-fill</button>
+                            <button class="btn btn-secondary" onclick="clearForm('movies-list')">Clear</button>
+                            <button class="btn btn-primary" onclick="sendMoviesList()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POST /movies -->
+                <div class="endpoint-card" data-endpoint="movies-create">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge post">POST</span>
+                        <span class="endpoint-path">/movies</span>
+                        <span class="endpoint-desc">Create a movie (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Request Body (JSON)</h4>
+                            <textarea id="movies-create-body">{
+  "title": "",
+  "synopsis": "",
+  "genres": [],
+  "releaseDate": "",
+  "directorId": null,
+  "minimumAge": 0,
+  "cast": [],
+  "pictures": []
+}</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-secondary" onclick="prefillMoviesCreate()">Pre-fill</button>
+                            <button class="btn btn-secondary" onclick="clearBody('movies-create-body')">Clear</button>
+                            <button class="btn btn-primary" onclick="sendMoviesCreate()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUT /movies -->
+                <div class="endpoint-card" data-endpoint="movies-update">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge put">PUT</span>
+                        <span class="endpoint-path">/movies</span>
+                        <span class="endpoint-desc">Update a movie (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Request Body (JSON)</h4>
+                            <textarea id="movies-update-body">{
+  "id": 1,
+  "title": "",
+  "synopsis": "",
+  "genres": [],
+  "releaseDate": "",
+  "directorId": null,
+  "minimumAge": 0
+}</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-secondary" onclick="prefillMoviesUpdate()">Pre-fill</button>
+                            <button class="btn btn-secondary" onclick="clearBody('movies-update-body')">Clear</button>
+                            <button class="btn btn-primary" onclick="sendMoviesUpdate()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POST /movies/multiple -->
+                <div class="endpoint-card" data-endpoint="movies-create-multiple">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge post">POST</span>
+                        <span class="endpoint-path">/movies/multiple</span>
+                        <span class="endpoint-desc">Create multiple movies (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Request Body (JSON Array)</h4>
+                            <textarea id="movies-create-multiple-body">[
+  {
+    "title": "",
+    "synopsis": "",
+    "genres": [],
+    "releaseDate": "",
+    "directorId": null,
+    "minimumAge": 0,
+    "cast": [],
+    "pictures": []
+  }
+]</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-secondary" onclick="prefillMoviesCreateMultiple()">Pre-fill</button>
+                            <button class="btn btn-secondary" onclick="clearBody('movies-create-multiple-body')">Clear</button>
+                            <button class="btn btn-primary" onclick="sendMoviesCreateMultiple()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GET /movies/{id} -->
+                <div class="endpoint-card" data-endpoint="movies-get">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/movies/{id}</span>
+                        <span class="endpoint-desc">Get movie details</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="movies-get-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendMoviesGet()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DELETE /movies/{id} -->
+                <div class="endpoint-card" data-endpoint="movies-delete">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge delete">DELETE</span>
+                        <span class="endpoint-path">/movies/{id}</span>
+                        <span class="endpoint-desc">Delete a movie (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="movies-delete-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendMoviesDelete()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUT /movies/{id}/mark-as-favorite -->
+                <div class="endpoint-card" data-endpoint="movies-favorite">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge put">PUT</span>
+                        <span class="endpoint-path">/movies/{id}/mark-as-favorite</span>
+                        <span class="endpoint-desc">Mark/unmark as favorite (user)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="movies-favorite-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <h4>Query Parameters</h4>
+                            <div class="param-row">
+                                <label>value</label>
+                                <input type="checkbox" id="movies-favorite-value" checked>
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendMoviesFavorite()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GET /movies/{id}/ratings -->
+                <div class="endpoint-card" data-endpoint="movies-ratings-list">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/movies/{id}/ratings</span>
+                        <span class="endpoint-desc">Get movie ratings</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="movies-ratings-list-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendMoviesRatingsList()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POST /movies/{id}/ratings -->
+                <div class="endpoint-card" data-endpoint="movies-ratings-create">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge post">POST</span>
+                        <span class="endpoint-path">/movies/{id}/ratings</span>
+                        <span class="endpoint-desc">Rate a movie (user)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="movies-ratings-create-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <h4>Request Body (JSON)</h4>
+                            <textarea id="movies-ratings-create-body">{
+  "score": 4,
+  "comment": ""
+}</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-secondary" onclick="prefillMoviesRatingsCreate()">Pre-fill</button>
+                            <button class="btn btn-secondary" onclick="clearBody('movies-ratings-create-body')">Clear</button>
+                            <button class="btn btn-primary" onclick="sendMoviesRatingsCreate()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DELETE /movies/{id}/ratings -->
+                <div class="endpoint-card" data-endpoint="movies-ratings-delete">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge delete">DELETE</span>
+                        <span class="endpoint-path">/movies/{id}/ratings</span>
+                        <span class="endpoint-desc">Delete own rating (user)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="movies-ratings-delete-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendMoviesRatingsDelete()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DELETE /movies/{id}/ratings/{userId} -->
+                <div class="endpoint-card" data-endpoint="movies-ratings-delete-user">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge delete">DELETE</span>
+                        <span class="endpoint-path">/movies/{id}/ratings/{userId}</span>
+                        <span class="endpoint-desc">Delete user rating (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id (movie)</label>
+                                <input type="number" id="movies-ratings-delete-user-id" value="1" min="1">
+                            </div>
+                            <div class="param-row">
+                                <label>userId</label>
+                                <input type="number" id="movies-ratings-delete-user-userId" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendMoviesRatingsDeleteUser()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GET /movies/{id}/pictures/{pictureId} -->
+                <div class="endpoint-card" data-endpoint="movies-pictures-get">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/movies/{id}/pictures/{pictureId}</span>
+                        <span class="endpoint-desc">Get movie picture</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id (movie)</label>
+                                <input type="number" id="movies-pictures-get-id" value="1" min="1">
+                            </div>
+                            <div class="param-row">
+                                <label>pictureId</label>
+                                <input type="number" id="movies-pictures-get-pictureId" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendMoviesPicturesGet()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DELETE /movies/{id}/pictures/{pictureId} -->
+                <div class="endpoint-card" data-endpoint="movies-pictures-delete">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge delete">DELETE</span>
+                        <span class="endpoint-path">/movies/{id}/pictures/{pictureId}</span>
+                        <span class="endpoint-desc">Delete movie picture (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id (movie)</label>
+                                <input type="number" id="movies-pictures-delete-id" value="1" min="1">
+                            </div>
+                            <div class="param-row">
+                                <label>pictureId</label>
+                                <input type="number" id="movies-pictures-delete-pictureId" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendMoviesPicturesDelete()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUT /movies/{id}/pictures/delete -->
+                <div class="endpoint-card" data-endpoint="movies-pictures-delete-multiple">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge put">PUT</span>
+                        <span class="endpoint-path">/movies/{id}/pictures/delete</span>
+                        <span class="endpoint-desc">Delete multiple pictures (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id (movie)</label>
+                                <input type="number" id="movies-pictures-delete-multiple-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <h4>Request Body (JSON Array of IDs)</h4>
+                            <textarea id="movies-pictures-delete-multiple-body">[1, 2, 3]</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendMoviesPicturesDeleteMultiple()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POST /movies/{id}/cast -->
+                <div class="endpoint-card" data-endpoint="movies-cast-add">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge post">POST</span>
+                        <span class="endpoint-path">/movies/{id}/cast</span>
+                        <span class="endpoint-desc">Add cast members</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id (movie)</label>
+                                <input type="number" id="movies-cast-add-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <h4>Request Body (JSON)</h4>
+                            <textarea id="movies-cast-add-body">[
+  {
+    "personId": 1,
+    "character": "Character Name"
+  }
+]</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-secondary" onclick="prefillMoviesCastAdd()">Pre-fill</button>
+                            <button class="btn btn-secondary" onclick="clearBody('movies-cast-add-body')">Clear</button>
+                            <button class="btn btn-primary" onclick="sendMoviesCastAdd()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DELETE /movies/{id}/cast/{personId} -->
+                <div class="endpoint-card" data-endpoint="movies-cast-remove">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge delete">DELETE</span>
+                        <span class="endpoint-path">/movies/{id}/cast/{personId}</span>
+                        <span class="endpoint-desc">Remove cast member</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id (movie)</label>
+                                <input type="number" id="movies-cast-remove-id" value="1" min="1">
+                            </div>
+                            <div class="param-row">
+                                <label>personId</label>
+                                <input type="number" id="movies-cast-remove-personId" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendMoviesCastRemove()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUT /movies/{id}/cast/remove -->
+                <div class="endpoint-card" data-endpoint="movies-cast-remove-multiple">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge put">PUT</span>
+                        <span class="endpoint-path">/movies/{id}/cast/remove</span>
+                        <span class="endpoint-desc">Remove multiple cast members</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id (movie)</label>
+                                <input type="number" id="movies-cast-remove-multiple-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <h4>Request Body (JSON Array of Person IDs)</h4>
+                            <textarea id="movies-cast-remove-multiple-body">[1, 2, 3]</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendMoviesCastRemoveMultiple()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GENRES SECTION -->
+            <div id="genres-section" class="section">
+
+                <!-- GET /genres -->
+                <div class="endpoint-card" data-endpoint="genres-list">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/genres</span>
+                        <span class="endpoint-desc">List genres (public)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Query Parameters</h4>
+                            <div class="param-row">
+                                <label>assignedOnly</label>
+                                <input type="checkbox" id="genres-list-assignedOnly">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendGenresList()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POST /genres -->
+                <div class="endpoint-card" data-endpoint="genres-create">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge post">POST</span>
+                        <span class="endpoint-path">/genres</span>
+                        <span class="endpoint-desc">Create genres (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Request Body (JSON Array)</h4>
+                            <textarea id="genres-create-body">[
+  {
+    "name": "",
+    "description": null
+  }
+]</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-secondary" onclick="prefillGenresCreate()">Pre-fill</button>
+                            <button class="btn btn-secondary" onclick="clearBody('genres-create-body')">Clear</button>
+                            <button class="btn btn-primary" onclick="sendGenresCreate()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUT /genres -->
+                <div class="endpoint-card" data-endpoint="genres-update">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge put">PUT</span>
+                        <span class="endpoint-path">/genres</span>
+                        <span class="endpoint-desc">Update a genre (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Request Body (JSON)</h4>
+                            <textarea id="genres-update-body">{
+  "id": 1,
+  "name": "",
+  "description": null
+}</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-secondary" onclick="prefillGenresUpdate()">Pre-fill</button>
+                            <button class="btn btn-secondary" onclick="clearBody('genres-update-body')">Clear</button>
+                            <button class="btn btn-primary" onclick="sendGenresUpdate()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DELETE /genres/{id} -->
+                <div class="endpoint-card" data-endpoint="genres-delete">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge delete">DELETE</span>
+                        <span class="endpoint-path">/genres/{id}</span>
+                        <span class="endpoint-desc">Delete a genre (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="genres-delete-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendGenresDelete()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUT /genres/delete -->
+                <div class="endpoint-card" data-endpoint="genres-delete-multiple">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge put">PUT</span>
+                        <span class="endpoint-path">/genres/delete</span>
+                        <span class="endpoint-desc">Delete multiple genres (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Request Body (JSON Array of IDs)</h4>
+                            <textarea id="genres-delete-multiple-body">[1, 2, 3]</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendGenresDeleteMultiple()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PEOPLE SECTION -->
+            <div id="people-section" class="section">
+
+                <!-- GET /people -->
+                <div class="endpoint-card" data-endpoint="people-list">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/people</span>
+                        <span class="endpoint-desc">List people (public)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendPeopleList()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POST /people -->
+                <div class="endpoint-card" data-endpoint="people-create">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge post">POST</span>
+                        <span class="endpoint-path">/people</span>
+                        <span class="endpoint-desc">Create a person (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Request Body (JSON)</h4>
+                            <textarea id="people-create-body">{
+  "name": "",
+  "dateOfBirth": null,
+  "pictures": []
+}</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-secondary" onclick="prefillPeopleCreate()">Pre-fill</button>
+                            <button class="btn btn-secondary" onclick="clearBody('people-create-body')">Clear</button>
+                            <button class="btn btn-primary" onclick="sendPeopleCreate()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUT /people -->
+                <div class="endpoint-card" data-endpoint="people-update">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge put">PUT</span>
+                        <span class="endpoint-path">/people</span>
+                        <span class="endpoint-desc">Update a person (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Request Body (JSON)</h4>
+                            <textarea id="people-update-body">{
+  "id": 1,
+  "name": "",
+  "dateOfBirth": null
+}</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-secondary" onclick="prefillPeopleUpdate()">Pre-fill</button>
+                            <button class="btn btn-secondary" onclick="clearBody('people-update-body')">Clear</button>
+                            <button class="btn btn-primary" onclick="sendPeopleUpdate()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POST /people/multiple -->
+                <div class="endpoint-card" data-endpoint="people-create-multiple">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge post">POST</span>
+                        <span class="endpoint-path">/people/multiple</span>
+                        <span class="endpoint-desc">Create multiple people (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Request Body (JSON Array)</h4>
+                            <textarea id="people-create-multiple-body">[
+  {
+    "name": "",
+    "dateOfBirth": null,
+    "pictures": []
+  }
+]</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-secondary" onclick="prefillPeopleCreateMultiple()">Pre-fill</button>
+                            <button class="btn btn-secondary" onclick="clearBody('people-create-multiple-body')">Clear</button>
+                            <button class="btn btn-primary" onclick="sendPeopleCreateMultiple()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GET /people/{id} -->
+                <div class="endpoint-card" data-endpoint="people-get">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/people/{id}</span>
+                        <span class="endpoint-desc">Get person details (public)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="people-get-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendPeopleGet()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DELETE /people/{id} -->
+                <div class="endpoint-card" data-endpoint="people-delete">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge delete">DELETE</span>
+                        <span class="endpoint-path">/people/{id}</span>
+                        <span class="endpoint-desc">Delete a person (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="people-delete-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendPeopleDelete()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GET /people/{id}/picture/{picId} -->
+                <div class="endpoint-card" data-endpoint="people-picture-get">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/people/{id}/picture/{picId}</span>
+                        <span class="endpoint-desc">Get person picture (public)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id (person)</label>
+                                <input type="number" id="people-picture-get-id" value="1" min="1">
+                            </div>
+                            <div class="param-row">
+                                <label>picId</label>
+                                <input type="number" id="people-picture-get-picId" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendPeoplePictureGet()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUT /people/{id}/add-pictures -->
+                <div class="endpoint-card" data-endpoint="people-pictures-add">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge put">PUT</span>
+                        <span class="endpoint-path">/people/{id}/add-pictures</span>
+                        <span class="endpoint-desc">Add pictures to person (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="people-pictures-add-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <h4>Request Body (JSON)</h4>
+                            <textarea id="people-pictures-add-body">[
+  {
+    "filename": "photo.jpg",
+    "data": "",
+    "description": null,
+    "mainPicture": false
+  }
+]</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendPeoplePicturesAdd()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUT /people/{id}/remove-pictures -->
+                <div class="endpoint-card" data-endpoint="people-pictures-remove">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge put">PUT</span>
+                        <span class="endpoint-path">/people/{id}/remove-pictures</span>
+                        <span class="endpoint-desc">Remove pictures (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="people-pictures-remove-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <h4>Request Body (JSON Array of Picture IDs)</h4>
+                            <textarea id="people-pictures-remove-body">[1, 2, 3]</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendPeoplePicturesRemove()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUT /people/delete -->
+                <div class="endpoint-card" data-endpoint="people-delete-multiple">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge put">PUT</span>
+                        <span class="endpoint-path">/people/delete</span>
+                        <span class="endpoint-desc">Delete multiple people (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Request Body (JSON Array of IDs)</h4>
+                            <textarea id="people-delete-multiple-body">[1, 2, 3]</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendPeopleDeleteMultiple()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- USERS SECTION -->
+            <div id="users-section" class="section">
+
+                <!-- POST /users/register -->
+                <div class="endpoint-card" data-endpoint="users-register">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge post">POST</span>
+                        <span class="endpoint-path">/users/register</span>
+                        <span class="endpoint-desc">Register new user (public)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Request Body (JSON)</h4>
+                            <textarea id="users-register-body">{
+  "username": "",
+  "password": "",
+  "dateOfBirth": null,
+  "picture": null
+}</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-secondary" onclick="prefillUsersRegister()">Pre-fill</button>
+                            <button class="btn btn-secondary" onclick="clearBody('users-register-body')">Clear</button>
+                            <button class="btn btn-primary" onclick="sendUsersRegister()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POST /users/register/admin -->
+                <div class="endpoint-card" data-endpoint="users-register-admin">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge post">POST</span>
+                        <span class="endpoint-path">/users/register/admin</span>
+                        <span class="endpoint-desc">Register admin (master admin only)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Request Body (JSON)</h4>
+                            <textarea id="users-register-admin-body">{
+  "username": "",
+  "password": "",
+  "dateOfBirth": null,
+  "picture": null
+}</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-secondary" onclick="prefillUsersRegisterAdmin()">Pre-fill</button>
+                            <button class="btn btn-secondary" onclick="clearBody('users-register-admin-body')">Clear</button>
+                            <button class="btn btn-primary" onclick="sendUsersRegisterAdmin()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GET /users/login -->
+                <div class="endpoint-card" data-endpoint="users-login">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/users/login</span>
+                        <span class="endpoint-desc">Login / validate credentials</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px;">Uses credentials from the auth panel above.</p>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendUsersLogin()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GET /users -->
+                <div class="endpoint-card" data-endpoint="users-list">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/users</span>
+                        <span class="endpoint-desc">List all users (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendUsersList()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DELETE /users/self -->
+                <div class="endpoint-card" data-endpoint="users-delete-self">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge delete">DELETE</span>
+                        <span class="endpoint-path">/users/self</span>
+                        <span class="endpoint-desc">Delete current user</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <p style="color: var(--error); font-size: 13px; margin-bottom: 15px;">Warning: This will delete your current account!</p>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendUsersDeleteSelf()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GET /users/self -->
+                <div class="endpoint-card" data-endpoint="users-self">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/users/self</span>
+                        <span class="endpoint-desc">Get current user info</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendUsersSelf()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUT /users/self/picture -->
+                <div class="endpoint-card" data-endpoint="users-self-picture-set">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge put">PUT</span>
+                        <span class="endpoint-path">/users/self/picture</span>
+                        <span class="endpoint-desc">Set own picture</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Request Body (JSON)</h4>
+                            <textarea id="users-self-picture-set-body">{
+  "filename": "avatar.jpg",
+  "data": "",
+  "description": null
+}</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendUsersSelfPictureSet()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DELETE /users/self/picture -->
+                <div class="endpoint-card" data-endpoint="users-self-picture-delete">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge delete">DELETE</span>
+                        <span class="endpoint-path">/users/self/picture</span>
+                        <span class="endpoint-desc">Remove own picture</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendUsersSelfPictureDelete()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GET /users/{id} -->
+                <div class="endpoint-card" data-endpoint="users-get">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/users/{id}</span>
+                        <span class="endpoint-desc">Get user profile</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="users-get-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendUsersGet()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DELETE /users/{id} -->
+                <div class="endpoint-card" data-endpoint="users-delete">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge delete">DELETE</span>
+                        <span class="endpoint-path">/users/{id}</span>
+                        <span class="endpoint-desc">Delete user (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="users-delete-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendUsersDelete()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GET /users/{id}/detail -->
+                <div class="endpoint-card" data-endpoint="users-detail">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/users/{id}/detail</span>
+                        <span class="endpoint-desc">Get user details (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="users-detail-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendUsersDetail()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GET /users/{id}/picture -->
+                <div class="endpoint-card" data-endpoint="users-picture-get">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/users/{id}/picture</span>
+                        <span class="endpoint-desc">Get user picture</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="users-picture-get-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendUsersPictureGet()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUT /users/{id}/picture -->
+                <div class="endpoint-card" data-endpoint="users-picture-set">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge put">PUT</span>
+                        <span class="endpoint-path">/users/{id}/picture</span>
+                        <span class="endpoint-desc">Set user picture (admin)</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Path Parameters</h4>
+                            <div class="param-row">
+                                <label>id</label>
+                                <input type="number" id="users-picture-set-id" value="1" min="1">
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <h4>Request Body (JSON)</h4>
+                            <textarea id="users-picture-set-body">{
+  "filename": "avatar.jpg",
+  "data": "",
+  "description": null
+}</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendUsersPictureSet()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SYSTEM SECTION -->
+            <div id="system-section" class="section">
+
+                <!-- GET /failures -->
+                <div class="endpoint-card" data-endpoint="failures-get">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge get">GET</span>
+                        <span class="endpoint-path">/failures</span>
+                        <span class="endpoint-desc">Get failure simulation config</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="endpoint-actions">
+                            <button class="btn btn-primary" onclick="sendFailuresGet()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PUT /failures -->
+                <div class="endpoint-card" data-endpoint="failures-set">
+                    <div class="endpoint-header" onclick="toggleEndpoint(this)">
+                        <span class="method-badge put">PUT</span>
+                        <span class="endpoint-path">/failures</span>
+                        <span class="endpoint-desc">Set failure simulation config</span>
+                        <span class="expand-icon">&#9660;</span>
+                    </div>
+                    <div class="endpoint-body">
+                        <div class="param-group">
+                            <h4>Request Body (JSON)</h4>
+                            <textarea id="failures-set-body">{
+  "minimumDelay": 0,
+  "maximumDelay": 0,
+  "failureRate": 0.0
+}</textarea>
+                        </div>
+                        <div class="endpoint-actions">
+                            <button class="btn btn-secondary" onclick="prefillFailuresSet()">Pre-fill</button>
+                            <button class="btn btn-secondary" onclick="clearBody('failures-set-body')">Clear</button>
+                            <button class="btn btn-primary" onclick="sendFailuresSet()">Send Request</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="response-panel">
+            <h2>Response</h2>
+            <div class="response-meta">
+                <span id="response-status" class="response-status">Waiting...</span>
+                <span id="response-time" class="response-time"></span>
+            </div>
+            <div class="response-section">
+                <h3>Request</h3>
+                <pre id="request-display">Click an endpoint to send a request...</pre>
+            </div>
+            <div class="response-section">
+                <h3>Response Body</h3>
+                <pre id="response-display">Response will appear here...</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =============================================
+        // CONFIGURATION
+        // =============================================
+        const CONFIG = {
+            baseUrl: window.location.origin
+        };
+
+        // =============================================
+        // SAMPLE DATA
+        // =============================================
+        const SAMPLE = {
+            movies: {
+                create: {
+                    title: "The Matrix",
+                    synopsis: "A computer hacker learns about the true nature of reality and his role in the war against its controllers.",
+                    genres: [1],
+                    releaseDate: "1999-03-31",
+                    directorId: 1,
+                    minimumAge: 13,
+                    cast: [{ personId: 1, character: "Neo" }],
+                    pictures: []
+                },
+                update: {
+                    id: 1,
+                    title: "The Matrix Reloaded",
+                    synopsis: "Neo and the rebels continue their fight against the machines.",
+                    genres: [1, 2],
+                    releaseDate: "2003-05-15",
+                    directorId: 1,
+                    minimumAge: 13
+                },
+                createMultiple: [
+                    {
+                        title: "Inception",
+                        synopsis: "A thief who steals secrets through dream-sharing technology.",
+                        genres: [1],
+                        releaseDate: "2010-07-16",
+                        directorId: 1,
+                        minimumAge: 13,
+                        cast: [],
+                        pictures: []
+                    },
+                    {
+                        title: "Interstellar",
+                        synopsis: "A team of explorers travel through a wormhole in space.",
+                        genres: [1],
+                        releaseDate: "2014-11-07",
+                        directorId: 1,
+                        minimumAge: 10,
+                        cast: [],
+                        pictures: []
+                    }
+                ],
+                rating: { score: 5, comment: "Absolute masterpiece!" },
+                cast: [{ personId: 1, character: "The One" }]
+            },
+            genres: {
+                create: [
+                    { name: "Science Fiction", description: "Movies featuring futuristic technology and space exploration" },
+                    { name: "Action", description: "High-energy films with combat and stunts" }
+                ],
+                update: { id: 1, name: "Sci-Fi", description: "Updated science fiction description" }
+            },
+            people: {
+                create: { name: "Keanu Reeves", dateOfBirth: "1964-09-02", pictures: [] },
+                update: { id: 1, name: "Keanu Charles Reeves", dateOfBirth: "1964-09-02" },
+                createMultiple: [
+                    { name: "Laurence Fishburne", dateOfBirth: "1961-07-30", pictures: [] },
+                    { name: "Carrie-Anne Moss", dateOfBirth: "1967-08-21", pictures: [] }
+                ]
+            },
+            users: {
+                register: { username: "moviefan2024", password: "SecurePass123!", dateOfBirth: "1990-05-20", picture: null },
+                registerAdmin: { username: "newadmin", password: "AdminPass123!", dateOfBirth: "1985-01-15", picture: null }
+            },
+            system: {
+                failures: { minimumDelay: 100, maximumDelay: 500, failureRate: 0.1 },
+                failuresOff: { minimumDelay: 0, maximumDelay: 0, failureRate: 0.0 }
+            }
+        };
+
+        // =============================================
+        // AUTH MANAGER
+        // =============================================
+        const Auth = {
+            getCredentials() {
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                if (username && password) {
+                    return 'Basic ' + btoa(username + ':' + password);
+                }
+                return null;
+            },
+
+            getHeaders() {
+                const headers = { 'Content-Type': 'application/json' };
+                const auth = this.getCredentials();
+                if (auth) {
+                    headers['Authorization'] = auth;
+                }
+                return headers;
+            }
+        };
+
+        // =============================================
+        // API CLIENT
+        // =============================================
+        async function apiRequest(method, path, options = {}) {
+            const url = new URL(path, CONFIG.baseUrl);
+
+            if (options.params) {
+                Object.entries(options.params).forEach(([key, value]) => {
+                    if (value !== null && value !== undefined && value !== '') {
+                        url.searchParams.append(key, value);
+                    }
+                });
+            }
+
+            const fetchOptions = {
+                method,
+                headers: Auth.getHeaders()
+            };
+
+            if (options.body && ['POST', 'PUT', 'PATCH'].includes(method)) {
+                fetchOptions.body = typeof options.body === 'string'
+                    ? options.body
+                    : JSON.stringify(options.body);
+            }
+
+            // Display request
+            displayRequest(method, url.toString(), fetchOptions);
+
+            const startTime = performance.now();
+
+            try {
+                const response = await fetch(url, fetchOptions);
+                const endTime = performance.now();
+                const duration = Math.round(endTime - startTime);
+
+                let data;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    data = await response.json();
+                } else {
+                    data = await response.text();
+                }
+
+                displayResponse(response.status, response.statusText, data, duration);
+                return { ok: response.ok, status: response.status, data };
+            } catch (error) {
+                displayResponse(0, 'Network Error', error.message, 0);
+                return { ok: false, status: 0, data: error.message };
+            }
+        }
+
+        // =============================================
+        // UI HELPERS
+        // =============================================
+        function displayRequest(method, url, options) {
+            let display = `${method} ${url}\n\nHeaders:\n`;
+            Object.entries(options.headers).forEach(([key, value]) => {
+                if (key === 'Authorization') {
+                    display += `  ${key}: Basic ****\n`;
+                } else {
+                    display += `  ${key}: ${value}\n`;
+                }
+            });
+            if (options.body) {
+                display += `\nBody:\n${options.body}`;
+            }
+            document.getElementById('request-display').textContent = display;
+        }
+
+        function displayResponse(status, statusText, data, duration) {
+            const statusEl = document.getElementById('response-status');
+            const timeEl = document.getElementById('response-time');
+            const responseEl = document.getElementById('response-display');
+
+            statusEl.textContent = `${status} ${statusText}`;
+            if (status >= 200 && status < 300) {
+                statusEl.className = 'response-status success';
+            } else if (status >= 400 && status < 500) {
+                statusEl.className = 'response-status warning';
+            } else {
+                statusEl.className = 'response-status error';
+            }
+
+            timeEl.textContent = `${duration}ms`;
+
+            if (typeof data === 'object') {
+                responseEl.textContent = JSON.stringify(data, null, 2);
+            } else {
+                responseEl.textContent = data;
+            }
+        }
+
+        function toggleEndpoint(header) {
+            header.parentElement.classList.toggle('expanded');
+        }
+
+        function clearBody(id) {
+            document.getElementById(id).value = '';
+        }
+
+        function clearForm(prefix) {
+            const card = document.querySelector(`[data-endpoint="${prefix}"]`);
+            card.querySelectorAll('input').forEach(input => {
+                if (input.type === 'checkbox') {
+                    input.checked = false;
+                } else if (input.type === 'number') {
+                    input.value = input.min || '0';
+                } else {
+                    input.value = '';
+                }
+            });
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.section + '-section').classList.add('active');
+            });
+        });
+
+        // =============================================
+        // AUTH TEST
+        // =============================================
+        async function testAuth() {
+            const result = await apiRequest('GET', '/users/login');
+            const statusEl = document.getElementById('auth-status');
+            if (result.ok) {
+                statusEl.textContent = `Authenticated: ${result.data.username} (${result.data.role})`;
+                statusEl.className = 'auth-status success';
+            } else {
+                statusEl.textContent = 'Authentication failed';
+                statusEl.className = 'auth-status error';
+            }
+        }
+
+        // =============================================
+        // MOVIES ENDPOINTS
+        // =============================================
+        function prefillMoviesList() {
+            document.getElementById('movies-list-offset').value = '0';
+            document.getElementById('movies-list-count').value = '10';
+            document.getElementById('movies-list-sortBy').value = 'releaseDate';
+            document.getElementById('movies-list-sortOrder').value = 'desc';
+        }
+
+        async function sendMoviesList() {
+            await apiRequest('GET', '/movies', {
+                params: {
+                    offset: document.getElementById('movies-list-offset').value,
+                    count: document.getElementById('movies-list-count').value,
+                    director: document.getElementById('movies-list-director').value || null,
+                    genre: document.getElementById('movies-list-genre').value || null,
+                    title: document.getElementById('movies-list-title').value || null,
+                    fromReleaseDate: document.getElementById('movies-list-fromReleaseDate').value || null,
+                    toReleaseDate: document.getElementById('movies-list-toReleaseDate').value || null,
+                    fromRating: document.getElementById('movies-list-fromRating').value,
+                    toRating: document.getElementById('movies-list-toRating').value,
+                    favoritesOnly: document.getElementById('movies-list-favoritesOnly').checked,
+                    sortBy: document.getElementById('movies-list-sortBy').value,
+                    sortOrder: document.getElementById('movies-list-sortOrder').value
+                }
+            });
+        }
+
+        function prefillMoviesCreate() {
+            document.getElementById('movies-create-body').value = JSON.stringify(SAMPLE.movies.create, null, 2);
+        }
+
+        async function sendMoviesCreate() {
+            const body = document.getElementById('movies-create-body').value;
+            await apiRequest('POST', '/movies', { body });
+        }
+
+        function prefillMoviesUpdate() {
+            document.getElementById('movies-update-body').value = JSON.stringify(SAMPLE.movies.update, null, 2);
+        }
+
+        async function sendMoviesUpdate() {
+            const body = document.getElementById('movies-update-body').value;
+            await apiRequest('PUT', '/movies', { body });
+        }
+
+        function prefillMoviesCreateMultiple() {
+            document.getElementById('movies-create-multiple-body').value = JSON.stringify(SAMPLE.movies.createMultiple, null, 2);
+        }
+
+        async function sendMoviesCreateMultiple() {
+            const body = document.getElementById('movies-create-multiple-body').value;
+            await apiRequest('POST', '/movies/multiple', { body });
+        }
+
+        async function sendMoviesGet() {
+            const id = document.getElementById('movies-get-id').value;
+            await apiRequest('GET', `/movies/${id}`);
+        }
+
+        async function sendMoviesDelete() {
+            const id = document.getElementById('movies-delete-id').value;
+            await apiRequest('DELETE', `/movies/${id}`);
+        }
+
+        async function sendMoviesFavorite() {
+            const id = document.getElementById('movies-favorite-id').value;
+            const value = document.getElementById('movies-favorite-value').checked;
+            await apiRequest('PUT', `/movies/${id}/mark-as-favorite`, { params: { value } });
+        }
+
+        async function sendMoviesRatingsList() {
+            const id = document.getElementById('movies-ratings-list-id').value;
+            await apiRequest('GET', `/movies/${id}/ratings`);
+        }
+
+        function prefillMoviesRatingsCreate() {
+            document.getElementById('movies-ratings-create-body').value = JSON.stringify(SAMPLE.movies.rating, null, 2);
+        }
+
+        async function sendMoviesRatingsCreate() {
+            const id = document.getElementById('movies-ratings-create-id').value;
+            const body = document.getElementById('movies-ratings-create-body').value;
+            await apiRequest('POST', `/movies/${id}/ratings`, { body });
+        }
+
+        async function sendMoviesRatingsDelete() {
+            const id = document.getElementById('movies-ratings-delete-id').value;
+            await apiRequest('DELETE', `/movies/${id}/ratings`);
+        }
+
+        async function sendMoviesRatingsDeleteUser() {
+            const id = document.getElementById('movies-ratings-delete-user-id').value;
+            const userId = document.getElementById('movies-ratings-delete-user-userId').value;
+            await apiRequest('DELETE', `/movies/${id}/ratings/${userId}`);
+        }
+
+        async function sendMoviesPicturesGet() {
+            const id = document.getElementById('movies-pictures-get-id').value;
+            const pictureId = document.getElementById('movies-pictures-get-pictureId').value;
+            await apiRequest('GET', `/movies/${id}/pictures/${pictureId}`);
+        }
+
+        async function sendMoviesPicturesDelete() {
+            const id = document.getElementById('movies-pictures-delete-id').value;
+            const pictureId = document.getElementById('movies-pictures-delete-pictureId').value;
+            await apiRequest('DELETE', `/movies/${id}/pictures/${pictureId}`);
+        }
+
+        async function sendMoviesPicturesDeleteMultiple() {
+            const id = document.getElementById('movies-pictures-delete-multiple-id').value;
+            const body = document.getElementById('movies-pictures-delete-multiple-body').value;
+            await apiRequest('PUT', `/movies/${id}/pictures/delete`, { body });
+        }
+
+        function prefillMoviesCastAdd() {
+            document.getElementById('movies-cast-add-body').value = JSON.stringify(SAMPLE.movies.cast, null, 2);
+        }
+
+        async function sendMoviesCastAdd() {
+            const id = document.getElementById('movies-cast-add-id').value;
+            const body = document.getElementById('movies-cast-add-body').value;
+            await apiRequest('POST', `/movies/${id}/cast`, { body });
+        }
+
+        async function sendMoviesCastRemove() {
+            const id = document.getElementById('movies-cast-remove-id').value;
+            const personId = document.getElementById('movies-cast-remove-personId').value;
+            await apiRequest('DELETE', `/movies/${id}/cast/${personId}`);
+        }
+
+        async function sendMoviesCastRemoveMultiple() {
+            const id = document.getElementById('movies-cast-remove-multiple-id').value;
+            const body = document.getElementById('movies-cast-remove-multiple-body').value;
+            await apiRequest('PUT', `/movies/${id}/cast/remove`, { body });
+        }
+
+        // =============================================
+        // GENRES ENDPOINTS
+        // =============================================
+        async function sendGenresList() {
+            const assignedOnly = document.getElementById('genres-list-assignedOnly').checked;
+            await apiRequest('GET', '/genres', { params: { assignedOnly } });
+        }
+
+        function prefillGenresCreate() {
+            document.getElementById('genres-create-body').value = JSON.stringify(SAMPLE.genres.create, null, 2);
+        }
+
+        async function sendGenresCreate() {
+            const body = document.getElementById('genres-create-body').value;
+            await apiRequest('POST', '/genres', { body });
+        }
+
+        function prefillGenresUpdate() {
+            document.getElementById('genres-update-body').value = JSON.stringify(SAMPLE.genres.update, null, 2);
+        }
+
+        async function sendGenresUpdate() {
+            const body = document.getElementById('genres-update-body').value;
+            await apiRequest('PUT', '/genres', { body });
+        }
+
+        async function sendGenresDelete() {
+            const id = document.getElementById('genres-delete-id').value;
+            await apiRequest('DELETE', `/genres/${id}`);
+        }
+
+        async function sendGenresDeleteMultiple() {
+            const body = document.getElementById('genres-delete-multiple-body').value;
+            await apiRequest('PUT', '/genres/delete', { body });
+        }
+
+        // =============================================
+        // PEOPLE ENDPOINTS
+        // =============================================
+        async function sendPeopleList() {
+            await apiRequest('GET', '/people');
+        }
+
+        function prefillPeopleCreate() {
+            document.getElementById('people-create-body').value = JSON.stringify(SAMPLE.people.create, null, 2);
+        }
+
+        async function sendPeopleCreate() {
+            const body = document.getElementById('people-create-body').value;
+            await apiRequest('POST', '/people', { body });
+        }
+
+        function prefillPeopleUpdate() {
+            document.getElementById('people-update-body').value = JSON.stringify(SAMPLE.people.update, null, 2);
+        }
+
+        async function sendPeopleUpdate() {
+            const body = document.getElementById('people-update-body').value;
+            await apiRequest('PUT', '/people', { body });
+        }
+
+        function prefillPeopleCreateMultiple() {
+            document.getElementById('people-create-multiple-body').value = JSON.stringify(SAMPLE.people.createMultiple, null, 2);
+        }
+
+        async function sendPeopleCreateMultiple() {
+            const body = document.getElementById('people-create-multiple-body').value;
+            await apiRequest('POST', '/people/multiple', { body });
+        }
+
+        async function sendPeopleGet() {
+            const id = document.getElementById('people-get-id').value;
+            await apiRequest('GET', `/people/${id}`);
+        }
+
+        async function sendPeopleDelete() {
+            const id = document.getElementById('people-delete-id').value;
+            await apiRequest('DELETE', `/people/${id}`);
+        }
+
+        async function sendPeoplePictureGet() {
+            const id = document.getElementById('people-picture-get-id').value;
+            const picId = document.getElementById('people-picture-get-picId').value;
+            await apiRequest('GET', `/people/${id}/picture/${picId}`);
+        }
+
+        async function sendPeoplePicturesAdd() {
+            const id = document.getElementById('people-pictures-add-id').value;
+            const body = document.getElementById('people-pictures-add-body').value;
+            await apiRequest('PUT', `/people/${id}/add-pictures`, { body });
+        }
+
+        async function sendPeoplePicturesRemove() {
+            const id = document.getElementById('people-pictures-remove-id').value;
+            const body = document.getElementById('people-pictures-remove-body').value;
+            await apiRequest('PUT', `/people/${id}/remove-pictures`, { body });
+        }
+
+        async function sendPeopleDeleteMultiple() {
+            const body = document.getElementById('people-delete-multiple-body').value;
+            await apiRequest('PUT', '/people/delete', { body });
+        }
+
+        // =============================================
+        // USERS ENDPOINTS
+        // =============================================
+        function prefillUsersRegister() {
+            document.getElementById('users-register-body').value = JSON.stringify(SAMPLE.users.register, null, 2);
+        }
+
+        async function sendUsersRegister() {
+            const body = document.getElementById('users-register-body').value;
+            await apiRequest('POST', '/users/register', { body });
+        }
+
+        function prefillUsersRegisterAdmin() {
+            document.getElementById('users-register-admin-body').value = JSON.stringify(SAMPLE.users.registerAdmin, null, 2);
+        }
+
+        async function sendUsersRegisterAdmin() {
+            const body = document.getElementById('users-register-admin-body').value;
+            await apiRequest('POST', '/users/register/admin', { body });
+        }
+
+        async function sendUsersLogin() {
+            await apiRequest('GET', '/users/login');
+        }
+
+        async function sendUsersList() {
+            await apiRequest('GET', '/users');
+        }
+
+        async function sendUsersDeleteSelf() {
+            await apiRequest('DELETE', '/users/self');
+        }
+
+        async function sendUsersSelf() {
+            await apiRequest('GET', '/users/self');
+        }
+
+        async function sendUsersSelfPictureSet() {
+            const body = document.getElementById('users-self-picture-set-body').value;
+            await apiRequest('PUT', '/users/self/picture', { body });
+        }
+
+        async function sendUsersSelfPictureDelete() {
+            await apiRequest('DELETE', '/users/self/picture');
+        }
+
+        async function sendUsersGet() {
+            const id = document.getElementById('users-get-id').value;
+            await apiRequest('GET', `/users/${id}`);
+        }
+
+        async function sendUsersDelete() {
+            const id = document.getElementById('users-delete-id').value;
+            await apiRequest('DELETE', `/users/${id}`);
+        }
+
+        async function sendUsersDetail() {
+            const id = document.getElementById('users-detail-id').value;
+            await apiRequest('GET', `/users/${id}/detail`);
+        }
+
+        async function sendUsersPictureGet() {
+            const id = document.getElementById('users-picture-get-id').value;
+            await apiRequest('GET', `/users/${id}/picture`);
+        }
+
+        async function sendUsersPictureSet() {
+            const id = document.getElementById('users-picture-set-id').value;
+            const body = document.getElementById('users-picture-set-body').value;
+            await apiRequest('PUT', `/users/${id}/picture`, { body });
+        }
+
+        // =============================================
+        // SYSTEM ENDPOINTS
+        // =============================================
+        async function sendFailuresGet() {
+            await apiRequest('GET', '/failures');
+        }
+
+        function prefillFailuresSet() {
+            document.getElementById('failures-set-body').value = JSON.stringify(SAMPLE.system.failures, null, 2);
+        }
+
+        async function sendFailuresSet() {
+            const body = document.getElementById('failures-set-body').value;
+            await apiRequest('PUT', '/failures', { body });
+        }
+
+        // =============================================
+        // INITIALIZATION
+        // =============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load saved credentials if any
+            const savedAuth = localStorage.getItem('movies-api-test-auth');
+            if (savedAuth) {
+                try {
+                    const { username, password } = JSON.parse(savedAuth);
+                    document.getElementById('username').value = username;
+                    document.getElementById('password').value = password;
+                } catch (e) {}
+            }
+
+            // Save credentials on change
+            ['username', 'password'].forEach(id => {
+                document.getElementById(id).addEventListener('change', () => {
+                    localStorage.setItem('movies-api-test-auth', JSON.stringify({
+                        username: document.getElementById('username').value,
+                        password: document.getElementById('password').value
+                    }));
+                });
+            });
+        });
+    </script>
+</body>
+</html>

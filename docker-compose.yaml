@@ -1,18 +1,18 @@
 name: movies-api-stack
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:17
     restart: unless-stopped
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-admin}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
     ports:
       - "7432:5432"
     volumes:
-      - C:/docker-volumes/movies-api/postgres:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-admin}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -21,8 +21,8 @@ services:
     image: dpage/pgadmin4
     restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: diogo@mail.pt
-      PGADMIN_DEFAULT_PASSWORD: diogo
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@admin.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
       PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
     ports:
       - "7081:80"
@@ -40,11 +40,15 @@ services:
     environment:
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_NAME: postgres
-      DB_USER: admin
-      DB_PASSWORD: admin
+      DB_NAME: ${POSTGRES_DB:-postgres}
+      DB_USER: ${POSTGRES_USER:-admin}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-admin}
     ports:
       - "9181:8080"
     volumes:
-      - C:/docker-volumes/movies-api/data:/opt/movies-api
-      - C:/docker-volumes/movies-api/openapi/documentation.yaml:/app/openapi/documentation.yaml
+      - api_data:/opt/movies-api
+      - ./openapi:/app/openapi:ro
+
+volumes:
+  postgres_data:
+  api_data:
