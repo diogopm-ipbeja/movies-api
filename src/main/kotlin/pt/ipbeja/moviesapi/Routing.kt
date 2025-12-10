@@ -66,7 +66,12 @@ val RoutingContext.isAdmin: Boolean
 
 fun Application.configureRouting(database: Database) {
     routing {
-        swaggerUI(path = "openapi"/*, swaggerFile = "openapi/documentation.json"*/)
+        swaggerUI(path = "openapi", swaggerFile = "openapi/documentation.yaml")
+        swaggerUI(path = "openapi/movies", swaggerFile = "openapi/movies.yaml")
+        swaggerUI(path = "openapi/genres", swaggerFile = "openapi/genres.yaml")
+        swaggerUI(path = "openapi/people", swaggerFile = "openapi/people.yaml")
+        swaggerUI(path = "openapi/users", swaggerFile = "openapi/users.yaml")
+        swaggerUI(path = "openapi/system", swaggerFile = "openapi/system.yaml")
     }
 
     /*install(SSE)
