@@ -72,6 +72,7 @@ data class MovieDetailResponse(
     val director: DirectorResponse?,
     val minimumAge: Int,
     val releaseDate: LocalDate,
+    val favorite: Boolean,
     val rating: Rating?,
     val pictures: List<PictureInfoResponse>,
     val createdAt: Instant,
@@ -81,7 +82,7 @@ data class MovieDetailResponse(
 
 
 @Serializable
-data class MovieQueryResponse(
+data class MovieSimpleResponse(
     val id: Int,
     val title: String,
     val synopsis: String,
@@ -104,7 +105,7 @@ data class DirectorResponse(val personId: Int, val name: String, val picture: Pi
 @Serializable
 data class CastMemberResponse(val personId: Int, val name: String, val character: String)
 
-fun MovieDetail.toResponse() = MovieDetailResponse(id, title, synopsis, genres.toResponse(), director?.toResponse(), minimumAge, releaseDate, rating, pictures.toResponse(), createdAt, updatedAt, cast.map { it.toResponse() })
+fun MovieDetail.toResponse() = MovieDetailResponse(id, title, synopsis, genres.toResponse(), director?.toResponse(), minimumAge, releaseDate, favorite, rating, pictures.toResponse(), createdAt, updatedAt, cast.map { it.toResponse() })
 
 fun Director.toResponse() =  DirectorResponse(personId, name, picture?.toResponse())
 

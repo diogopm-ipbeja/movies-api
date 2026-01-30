@@ -8,7 +8,11 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import pt.ipbeja.moviesapi.*
 import pt.ipbeja.moviesapi.entities.common.findMainPicture
 import pt.ipbeja.moviesapi.entities.common.toPictureInfo
+import pt.ipbeja.moviesapi.entities.genres.model.toGenre
+import pt.ipbeja.moviesapi.entities.movies.Rating
+import pt.ipbeja.moviesapi.entities.movies.RatingBucket
 import pt.ipbeja.moviesapi.entities.movies.model.Director
+import pt.ipbeja.moviesapi.entities.movies.model.MovieDetail
 import pt.ipbeja.moviesapi.entities.movies.model.MovieSimple
 import pt.ipbeja.moviesapi.utilities.Request
 import pt.ipbeja.moviesapi.utilities.RequestHandler
@@ -36,9 +40,6 @@ data class UpdateMovieCommand(
 ) : Request<MovieSimple>
 
 
-data class UpdatedMovie(val id: Int)
-
-
 class UpdateMovieCommandHandler(val db: Database) : RequestHandler<UpdateMovieCommand, MovieSimple> {
 
 
@@ -57,15 +58,23 @@ class UpdateMovieCommandHandler(val db: Database) : RequestHandler<UpdateMovieCo
 
 
 
-        val avgCol = MovieRatings.score.avg().alias("rating_average")
+        /*val avgCol = MovieRatings.score.avg().alias("rating_average")
         val avgRating = MovieRatings.select(MovieRatings.movie, avgCol)
+                .groupBy(MovieRatings.movie)
                 .where { MovieRatings.movie eq request.id}
                 .map { it[avgCol] }
-                .firstOrNull()?.setScale(2, RoundingMode.HALF_UP)?.toFloat()
+                .firstOrNull()?.setScale(2, RoundingMode.HALF_UP)?.toFloat()*/
+
+
+
+        val scores = movie.ratings.map { r -> r.score }
+        val avgRating = if(scores.isEmpty()) 0f else scores.average().toFloat().toBigDecimal().setScale(2,
+            RoundingMode.HALF_UP).toFloat()
+
 
 
         val existingGenres = Genres.select(Genres.id).map { it[Genres.id] }.toSet()
-        val nonExistentGenres = request.genres - existingGenres
+        val nonExistentGenres = request.genres.subtract(existingGenres)
         if(nonExistentGenres.isNotEmpty()) throw Exception("Genres don't exist")
 
 
@@ -91,8 +100,9 @@ class UpdateMovieCommandHandler(val db: Database) : RequestHandler<UpdateMovieCo
         val director = movie.director?.let {
             Director(it.id.value, it.name, it.pictures.findMainPicture()?.toPictureInfo())
         }
-        MovieSimple(movie.id.value, movie.title, movie.synopsis, movie.genres.map { it.name }.toSet(), movie.releaseDate, mainPic?.toPictureInfo(), false, director, avgRating, movie.createdAt, movie.updatedAt)
 
+
+        MovieSimple(movie.id.value, movie.title, movie.synopsis, movie.genres.map { it.name }.toSet(), movie.releaseDate, mainPic?.toPictureInfo(), false, director, avgRating, movie.createdAt, movie.updatedAt)
     }
 
 

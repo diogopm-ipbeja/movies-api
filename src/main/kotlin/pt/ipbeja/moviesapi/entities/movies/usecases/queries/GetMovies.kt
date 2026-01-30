@@ -69,6 +69,7 @@ class GetMoviesQueryHandler(val db: Database) : RequestHandler<GetMoviesQuery, L
 
 
 
+
         val userEntity = requesterId?.let { UserEntity[it] }
         val results = if (request.sortBy.equals("rating", true)) {
 
@@ -180,6 +181,7 @@ class GetMoviesQueryHandler(val db: Database) : RequestHandler<GetMoviesQuery, L
 
         } else {
 
+
             val finalCondition = if (conditions.isEmpty()) {
                 Op.TRUE
             } else {
@@ -194,7 +196,7 @@ class GetMoviesQueryHandler(val db: Database) : RequestHandler<GetMoviesQuery, L
             MovieEntity.find { finalCondition }
                 .orderBy(sortColumn to sortOrder)
                 .filter {
-                    (request.genre.isNullOrBlank() or it.genres.any { g -> g.name.equals(request.genre, true) }) and ((requesterId == null) or it.favoritedBy.any { f -> f.id.value == requesterId })
+                    (request.genre.isNullOrBlank() or it.genres.any { g -> g.name.equals(request.genre, true) }) and ((requesterId == null) or !request.favoritesOnly or it.favoritedBy.any { f -> f.id.value == requesterId })
                 }
                 .map {
                     val scores = it.ratings.map { seen -> seen.score }

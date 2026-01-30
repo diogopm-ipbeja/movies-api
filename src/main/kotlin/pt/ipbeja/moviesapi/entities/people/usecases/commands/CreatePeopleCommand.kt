@@ -49,7 +49,7 @@ private fun createPerson(
     dateOfBirth: LocalDate?,
     pictures: List<CreatePicture>
 ): Person {
-    val person = PersonEntity.Companion.new {
+    val person = PersonEntity.new {
         this.name = name.trim()
         this.dateOfBirth = dateOfBirth
     }
@@ -67,7 +67,7 @@ private fun createPerson(
         }
 
 
-        PersonPictures.batchInsert(picAndPath) {
+        val results = PersonPictures.batchInsert(picAndPath) {
             this[PersonPictures.person] = person.id
             this[PersonPictures.url] = it.second.toString()
             this[PersonPictures.filename] = it.first.filename
@@ -83,6 +83,10 @@ private fun createPerson(
                 it[PersonPictures.description]
             )
         }
+        tx.commit()
+
+        results
+
     } else emptyList()
 
     return Person(person.id.value, person.name, person.dateOfBirth, pictures)

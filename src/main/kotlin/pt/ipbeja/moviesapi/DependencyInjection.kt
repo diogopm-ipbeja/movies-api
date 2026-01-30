@@ -1,5 +1,6 @@
 package pt.ipbeja.moviesapi
 
+import io.ktor.http.Headers
 import io.ktor.server.application.*
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.koin.core.module.dsl.factoryOf
@@ -23,6 +24,7 @@ import pt.ipbeja.moviesapi.entities.people.PersonSimple
 import pt.ipbeja.moviesapi.entities.people.usecases.commands.*
 import pt.ipbeja.moviesapi.entities.people.usecases.queries.GetPeopleQuery
 import pt.ipbeja.moviesapi.entities.people.usecases.queries.GetPeopleQueryHandler
+import pt.ipbeja.moviesapi.entities.people.usecases.queries.GetPersonPictureQueryHandler
 import pt.ipbeja.moviesapi.entities.people.usecases.queries.GetPersonQuery
 import pt.ipbeja.moviesapi.entities.people.usecases.queries.GetPersonQueryHandler
 import pt.ipbeja.moviesapi.entities.users.UserInfo
@@ -130,6 +132,7 @@ fun Application.configureFrameworks(database: Database) {
             factory { GetGenresQueryHandler(get()) }
 
             factory { GetMovieQueryHandler(get()) }
+            factory { GetMoviePictureQueryHandler(get(), get()) }
             factory { GetMoviesQueryHandler(get()) }
             factory { GetMovieRatingQueryHandler(get()) }
             factory { CreateMovieCommandHandler(get(), get()) }
@@ -148,6 +151,7 @@ fun Application.configureFrameworks(database: Database) {
 
             factory { GetPeopleQueryHandler(get()) }
             factory { GetPersonQueryHandler(get()) }
+            factory { GetPersonPictureQueryHandler(get(), get()) }
             factory { CreatePeopleCommandHandler(get(), get()) }
             factory { DeletePeopleCommandHandler(get()) }
             factory { UpdatePersonCommandHandler(get()) }

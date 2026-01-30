@@ -40,7 +40,7 @@ fun List<PictureInfo>.toResponse() = map { it.toResponse() }
 fun SizedIterable<MoviePictureEntity>.findMainPicture(): MoviePictureEntity? {
     var candidate: MoviePictureEntity? = null
 
-    for (pic in this.orderBy(MoviePictures.id to SortOrder.ASC)) {
+    for (pic in this) {
         if(pic.mainPicture) return pic
         if(candidate == null) candidate = pic
     }
@@ -51,7 +51,7 @@ fun SizedIterable<MoviePictureEntity>.findMainPicture(): MoviePictureEntity? {
 fun SizedIterable<PersonPictureEntity>.findMainPicture(): PersonPictureEntity? {
     var candidate: PersonPictureEntity? = null
 
-    for (pic in this.orderBy(MoviePictures.id to SortOrder.ASC)) {
+    for (pic in this) {
         if(pic.mainPicture) return pic
         if(candidate == null) candidate = pic
     }

@@ -60,7 +60,7 @@ class GetMovieQueryHandler(val database: Database) : RequestHandler<GetMovieQuer
             isFavorite = FavoriteEntity.find { (Favorites.user eq requesterId) and (Favorites.movie eq movieId) }.limit(1).count() == 1L
         }
 
-        val cast = movie.castMembers.map { CastMember(it.person.id.value, it.person.name, it.role.value) }
+        val cast = movie.castMembers.map { CastMember(it.person.id.value, it.person.name, it.role) }
 
 
         /*val mainMoviePic = movie.pictures.notForUpdate().orderBy(MoviePictures.mainPicture to SortOrder.ASC, MoviePictures.id to SortOrder.ASC)

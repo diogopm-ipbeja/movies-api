@@ -84,11 +84,7 @@ object PersonPictures : IntIdTable("person_pictures") {
 object CastMembers : CompositeIdTable("cast_members") {
     val movie = reference("movie_id", Movies, onDelete = ReferenceOption.CASCADE)
     val person = reference("person_id", Persons, onDelete = ReferenceOption.CASCADE)
-    val role = text("role").entityId()
-    // val designation = text("designation")
-    // val asd = enumerationByName<Roles>("sdad", 32)
-    // val asd2 = customEnumeration("columnName",{ value -> enumValueOf<Roles>(value as String) }, { PGEnum("roles", it) })
-    // val asd2 = customEnumeration("enumCol", "roles", fromDb = { v -> enumValueOf<Roles>(v as String)}, toDb = { v -> PGEnum("roles", v)})
+    val role = text("role")
 
     init {
         addIdColumn(movie)

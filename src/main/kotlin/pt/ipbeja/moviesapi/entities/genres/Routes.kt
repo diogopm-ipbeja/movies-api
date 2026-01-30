@@ -37,7 +37,6 @@ fun Route.genres() = route("/genres") {
 
 
     get<GetGenres> {
-        // val assignedOnly = call.queryParameters["assignedOnly"]?.toBoolean() ?: false
         val handler by inject<GetGenresQueryHandler>()
         val results = handler.handle(GetGenresQuery(it.assignedOnly))
         val response = results.map { it.toResponse() }

@@ -78,6 +78,8 @@ class AddPicturesToPersonCommandHandler(val db: Database, val storageService: St
             PictureInfo(it[PersonPictures.id].value, it[PersonPictures.filename], it[PersonPictures.contentType], it[PersonPictures.mainPicture])
         }*/
 
+        tx.commit()
+
         val person = PersonEntity.Companion[personId]
         Person(
             person.id.value,

@@ -1,5 +1,6 @@
 package pt.ipbeja.moviesapi.entities.movies.usecases.commands
 
+import org.jetbrains.exposed.v1.core.dao.id.CompositeID
 import org.jetbrains.exposed.v1.core.dao.id.EntityID
 import org.jetbrains.exposed.v1.jdbc.Database
 import org.jetbrains.exposed.v1.jdbc.batchInsert
@@ -53,14 +54,17 @@ class AddCastMembersCommandHandler2(val db: Database) : RequestHandler<AddCastMe
 
         val sanitized = request.castMembers.map { it.copy(role = it.role.trim()) }
 
-
         return@transaction sanitized.map { r ->
-            CastMemberEntity.new {
-                this.personId = EntityID(r.personId, Persons)
-                this.movieId = EntityID(request.movieId, Movies)
+            val id = CompositeID {
+                it[CastMembers.person] = request.movieId
+                it[CastMembers.movie] = r.personId
+            }
+            CastMemberEntity.new(id) {
+                this.role = r.role
+
             }
         }.map {
-            CastMember(it.personId.value, it.person.name, it.role.value)
+            CastMember(it.personId.value, it.person.name, it.role)
         }
 
     }

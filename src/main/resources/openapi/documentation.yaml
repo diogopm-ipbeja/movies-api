@@ -26,11 +26,14 @@ info:
     url: https://opensource.org/licenses/MIT
 
 servers:
-  - url: http://localhost:{port}
+  - url: http://{host}:{port}
     description: Development server
     variables:
+      host:
+        default: 'localhost'
+        description: Server hostname
       port:
-        default: '9181'
+        default: '8080'
         description: Server port
 
 tags:
@@ -661,7 +664,7 @@ components:
         - createdAt
         - cast
 
-    MovieQueryResponse:
+    MovieSimpleResponse:
       type: object
       description: Movie information for list queries
       properties:
@@ -1053,7 +1056,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/MovieQueryResponse'
+                  $ref: '#/components/schemas/MovieSimpleResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
@@ -1105,7 +1108,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MovieDetailResponse'
+                $ref: '#/components/schemas/MovieSimpleResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':

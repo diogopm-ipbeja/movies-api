@@ -83,7 +83,7 @@ fun Routing.movies() = route("/movies") {
             )
 
             call.respond(results.map { m ->
-                MovieQueryResponse(
+                MovieSimpleResponse(
                     m.id,
                     m.title,
                     m.synopsis,
@@ -132,7 +132,7 @@ fun Routing.movies() = route("/movies") {
         }
 
         delete("/{id}/ratings/{userId}") {
-            if(!requireAdmin()) return@delete
+            if (!requireAdmin()) return@delete
             val movieId = call.pathParameters.getOrFail<Int>("id")
             val user = call.pathParameters.getOrFail<Int>("userId")
             val handler by inject<DeleteMovieRatingCommandHandler>()
@@ -171,12 +171,13 @@ fun Routing.movies() = route("/movies") {
                 it.genres,
                 it.directorId,
                 it.releaseDate,
-                it.minimumAge,)
+                it.minimumAge,
+            )
 
             val handler by inject<CreateMovieCommandHandler>()
 
             val results = handler.handle(command)
-            call.respond(results.toResponse() )
+            call.respond(results.toResponse())
         }
 
 
@@ -226,7 +227,23 @@ fun Routing.movies() = route("/movies") {
 
             val handler by inject<UpdateMovieCommandHandler>()
             val result = handler.handle(command)
-            call.respond(result)
+
+            call.respond(
+                MovieSimpleResponse(
+                    result.id,
+                    result.title,
+                    result.synopsis,
+                    result.genres,
+                    result.releaseDate,
+                    result.director?.toResponse(),
+                    result.mainPicture?.toResponse(),
+                    result.rating,
+                    result.favorite,
+                    result.createdAt,
+                    result.updatedAt
+
+                )
+            )
         }
 
         post("/{id}/cast") {

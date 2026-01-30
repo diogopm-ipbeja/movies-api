@@ -36,7 +36,7 @@ class GetPersonQueryHandler(val db: Database) : RequestHandler<GetPersonQuery, V
                 val mainPic = it.pictures.findMainPicture()
                 PersonDetail.Directed(it.id.value, it.title, it.releaseDate, mainPic?.toPictureInfo())
             },
-            roles.map { PersonDetail.Role(it.movie.id.value, it.movie.title, it.movie.releaseDate, it.role.value) })
+            roles.map { PersonDetail.Role(it.movie.id.value, it.movie.title, it.movie.releaseDate, it.role) })
             .success()
     }
 }
